@@ -66,8 +66,8 @@ select {
     background: #3750a9;
     border: 2px solid #ffffff;
     margin: 1em .5em 0;
-    padding: 7px 20px;
-    max-width: 120px;
+    padding: 7px 0px;
+    max-width: 270px;
     transition: all .25s ease-in-out;
 
     text-transform: uppercase;
@@ -78,10 +78,14 @@ select {
 #edit-submit:hover, #edit-preview:hover {
     background: #3750a9;
     margin: 1em .5em 0;
-    padding: 7px 20px;
+    padding: 7px 0px;
     transition: all .25s ease-in-out;
     color: #3750a9;
     background: #ffffff;
     border: 2px solid #3750a9;
     transition: all .1s ease-in-out;
+}
+
+.login-links {
+    text-align: center;
 }

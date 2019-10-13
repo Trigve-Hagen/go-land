@@ -18,12 +18,52 @@ func init() {
 
 func main() {
 	http.HandleFunc("/", index)
+	http.HandleFunc("/about", about)
+	http.HandleFunc("/contact", contact)
+	http.HandleFunc("/login", login)
+	http.HandleFunc("/register", register)
+	http.HandleFunc("/forgot/password", forgotPassword)
 	http.Handle("/public/", http.StripPrefix("/public", http.FileServer(http.Dir("public"))))
 	http.ListenAndServe(":8080", nil)
 }
 
 func index(res http.ResponseWriter, req *http.Request) {
 	err := tpl.ExecuteTemplate(res, "index.gohtml", nil)
+	if err != nil {
+		log.Fatalln("template didn't execute: ", err)
+	}
+}
+
+func about(res http.ResponseWriter, req *http.Request) {
+	err := tpl.ExecuteTemplate(res, "about.gohtml", nil)
+	if err != nil {
+		log.Fatalln("template didn't execute: ", err)
+	}
+}
+
+func contact(res http.ResponseWriter, req *http.Request) {
+	err := tpl.ExecuteTemplate(res, "contact.gohtml", nil)
+	if err != nil {
+		log.Fatalln("template didn't execute: ", err)
+	}
+}
+
+func login(res http.ResponseWriter, req *http.Request) {
+	err := tpl.ExecuteTemplate(res, "login.gohtml", nil)
+	if err != nil {
+		log.Fatalln("template didn't execute: ", err)
+	}
+}
+
+func register(res http.ResponseWriter, req *http.Request) {
+	err := tpl.ExecuteTemplate(res, "register.gohtml", nil)
+	if err != nil {
+		log.Fatalln("template didn't execute: ", err)
+	}
+}
+
+func forgotPassword(res http.ResponseWriter, req *http.Request) {
+	err := tpl.ExecuteTemplate(res, "forgot-password.gohtml", nil)
 	if err != nil {
 		log.Fatalln("template didn't execute: ", err)
 	}

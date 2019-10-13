@@ -1,10 +1,36 @@
-{{define "login"}}
-    <form action="/" method="POST">
-        <label for="username" class="form-label">Username</label>
-        <input type="text" name="username" id="username" class="form-item" value=""/>
+<!DOCTYPE html>
+<html>
+    <head lang='en'>
+        <meta charset='UTF-8'>
+        <title>IBeAHero | Login</title>
+        <meta name='description' content='The login page to destiny.'>
+        {{template "head-links"}}
+    </head>
+    <body>
+        {{template "upper-header"}}
+        {{template "header"}}
+        <div class="page-main-container">
+            <div class="page-container">
+                <div class="page-1200-container">
+                    <h3 class="page-title">
+                        Login
+                    </h3>
+                    <form action="/" method="POST">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" name="username" id="username" class="form-item" value=""/>
 
-        <label for="password" class="form-label">Password</label>
-        <input type="password" name="password" id="password" class="form-item" value=""/>
-        <input type="submit" name="submit-login" id="edit-submit" value="Login"/>
-    </form>
-{{end}}
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" name="password" id="password" class="form-item" value=""/>
+                        <input type="submit" name="submit-login" id="edit-submit" value="Login"/>
+                        <input type="submit" name="submit-login" id="edit-submit" value="Login With Facebook"/>
+                    </form>
+                    <div class="login-links">
+                        <a href="/register" class="plain-links">Register</a> | <a href="/forgot/password" class="plain-links">Forgot Password</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {{template "footer"}}
+    </body>
+</html>

@@ -1,0 +1,32 @@
+
+@media screen {
+    .footer {
+        border-top: 1px solid #dddddd;
+        padding: 20px;
+    }
+
+    .footer-column-wrapper {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .footer-column {
+        flex: 1;
+    }
+}
+
+@media screen and (min-width: 1000px) {
+    .footer {
+        border-top: 1px solid #dddddd;
+        padding: 50px;
+    }
+
+    .footer-column-wrapper {
+        display: flex;
+        flex-direction: row;
+    }
+
+    .footer-column {
+        flex: 1;
+    }
+}
