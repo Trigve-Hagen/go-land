@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+    <head lang='en'>
+        <meta charset='UTF-8'>
+        <title>Stories</title>
+        <meta name='description' content='descrip'>
+        <meta name='keywords' content='keywords'>
+        <meta name='author' content='author'>
+        <meta name='viewport' content='width=device-width, initial-scale=1'>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+        <link rel='stylesheet' href='../public/css/main.css'>
+        <link rel='stylesheet' href='../public/css/menu.css'>
+        <link rel='stylesheet' href='../public/css/form.css'>
+        <link rel='stylesheet' href='../public/css/upper-header.css'>
+        {{template "header-scripts"}}
+    </head>
+    <body>
+        {{template "upper-header"}}
+        {{template "header"}}
+        <div class="page-main-container">
+            <div class="page-container">
+                <div class="page-1200-container">
+                    <h3 class="page-title">
+                        Login
+                    </h3>
+                    {{template "login"}}
+                </div>
+            </div>
+        </div>
+        
+        {{template "footer"}}
+        {{template "body-scripts"}}
+    </body>
+</html>

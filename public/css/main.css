@@ -1,0 +1,100 @@
+/* Main Styles */
+
+body {
+    position: relative;
+    background: #ffffff;
+    height: 100%;
+    width: 100%;
+    font-family: 'Nunito Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+img{
+    height: auto;
+    width: auto;
+    vertical-align: bottom;
+}
+
+*,
+*:before,
+*:after{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+*:focus{
+    border: 0;
+    outline: 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: bold;
+    color: #111820;
+}
+
+p {
+    margin: 0;
+    padding: 0;
+}
+
+.page-main-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 20px;
+}
+
+.page-container {
+    flex-grow: 1;
+    align-items: center;
+    max-width: 960px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.page-1200-container {
+    flex-grow: 1;
+    align-items: center;
+    max-width: 80%;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.page-title {
+    flex-grow: 1;
+    font-size: 26px;
+    font-weight: 300;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    text-align: center;
+    text-transform: uppercase;
+    font-family: 'Segoe Script', sans-serif;
+}
+
+.image-container {
+    width: 100%;
+    padding: 5px 20px 20px 20px;
+}
+
+.image-label {
+    font-size: 1rem;
+    color: #ffffff;
+    background: #3750a9;
+    padding: 6px 10px 0px 10px;
+}
+
+.image-img {
+    max-width: 650px !important;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.image-caption {
+    font-size: 14px;
+    text-align: center;
+    margin: 0 auto;
+    margin-top: 10px;
+}

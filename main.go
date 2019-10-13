@@ -2,21 +2,34 @@ package main
 
 import (
 	"fmt"
+	"html/template"
+	"log"
 	"net/http"
-
-	"github.com/Trigve-Hagen/rlayouts/config"
-	users "github.com/Trigve-Hagen/rlayouts/models"
 )
 
-func main() {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", homePage)
+var tpl *template.Template
 
-	fmt.Println("Server Starting....")
-	http.ListenAndServe(":8080", mux)
+func init() {
+	tpl = template.Must(template.ParseGlob("templates/*/*/*.gohtml"))
+	for _, t := range tpl.Templates() {
+		fmt.Println(t.Name())
+	}
 }
 
-func homePage(w http.ResponseWriter, req *http.Request) {
+func main() {
+	http.HandleFunc("/", index)
+	http.Handle("/public/", http.StripPrefix("/public", http.FileServer(http.Dir("public"))))
+	http.ListenAndServe(":8080", nil)
+}
+
+func index(res http.ResponseWriter, req *http.Request) {
+	err := tpl.ExecuteTemplate(res, "index.gohtml", nil)
+	if err != nil {
+		log.Fatalln("template didn't execute: ", err)
+	}
+}
+
+/*func homePage(w http.ResponseWriter, req *http.Request) {
 	db, err := config.GetMSSQLDB()
 	if err != nil {
 		fmt.Println(err)
@@ -40,4 +53,4 @@ func homePage(w http.ResponseWriter, req *http.Request) {
 			}
 		}
 	}
-}
+}*/

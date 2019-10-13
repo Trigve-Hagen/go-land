@@ -1,0 +1,27 @@
+{{define "header"}}
+    <div id="top-nav" class="topnav">
+        <div class="branding logo">
+            <a href="javascript:void(0);" class="icon" id="hamburger-menu" onclick="showMenu()">
+                <i class="fa fa-bars"></i>
+            </a>
+            <a href="/" class="active" id="branding-logo">
+                <img src="../public/images/branding/logo.png" class="brand-logo" alt="Ibeahero Logo"/>
+            </a>
+        </div>
+
+        <div class="branding links">
+            <div class="main-menu-links">
+                <a href="/" class="menu-links">Home</a>
+                <a href="/about" class="menu-links">About</a>
+                <a href="/contact" class="menu-links">Contact</a>
+            </div>
+        </div>
+    </div>
+    <div id="side-nav" class="sidenav">
+        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+        <a href="#">About</a>
+        <a href="#">Services</a>
+        <a href="#">Clients</a>
+        <a href="#">Contact</a>
+    </div>
+{{end}}
