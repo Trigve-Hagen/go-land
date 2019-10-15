@@ -88,4 +88,9 @@ select {
 
 .login-links {
     text-align: center;
+    margin-bottom: 50px;
+}
+
+.login-links a {
+    text-decoration: none;
 }

@@ -11,7 +11,7 @@ import (
 
 func GetMSSQLDB() (db *sql.DB, err error) {
 	server := "localhost"
-	port := 56834
+	port := 1433
 	user := "sa"
 	password := "password"
 	connString := fmt.Sprintf("server=%s;user id=%s;password=%s;port=%d",
