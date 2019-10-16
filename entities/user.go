@@ -7,4 +7,5 @@ type User struct {
 	Uname    string
 	Email    string
 	Password string
+	Admin    bool
 }

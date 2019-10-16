@@ -43,7 +43,7 @@ func (userConnection UserConnection) GetUserByID(uuid string) ([]entities.User, 
 	}
 }
 
-func (userConnection UserConnection) CheckLogin(uname string, password string) bool {
+func (userConnection UserConnection) CheckLoginForm(uname string, password string) bool {
 	fmt.Println(uname)
 	return true
 }
