@@ -21,9 +21,9 @@ var data = map[string]entities.User{}
 
 func init() {
 	tpl = template.Must(template.ParseGlob("templates/*/*/*.gohtml"))
-	for _, t := range tpl.Templates() {
+	/*for _, t := range tpl.Templates() {
 		fmt.Println(t.Name())
-	}
+	}*/
 }
 
 func main() {
@@ -60,13 +60,38 @@ func contact(res http.ResponseWriter, req *http.Request) {
 }
 
 func login(res http.ResponseWriter, req *http.Request) {
-	err := tpl.ExecuteTemplate(res, "login.gohtml", nil)
-	if err != nil {
-		log.Fatalln("template didn't execute: ", err)
+	if ifLoggedIn(req) {
+		http.Redirect(res, req, "/auth/admin", http.StatusMovedPermanently)
+		return
 	}
+	if req.Method == http.MethodPost {
+		uName := req.FormValue("uname")
+		pwd := req.FormValue("password")
+		db, err := config.GetMSSQLDB()
+		if err != nil {
+			log.Fatalln("error connecting: ", err)
+		}
+		userConnection := users.UserConnection{
+			Db: db,
+		}
+		if userConnection.CheckLogin(uName, pwd) {
+			http.Redirect(res, req, "/auth/admin", http.StatusMovedPermanently)
+			return
+		}
+	} else {
+		err := tpl.ExecuteTemplate(res, "login.gohtml", nil)
+		if err != nil {
+			log.Fatalln("template didn't execute: ", err)
+		}
+	}
+
 }
 
 func register(res http.ResponseWriter, req *http.Request) {
+	if ifLoggedIn(req) {
+		http.Redirect(res, req, "/auth/admin", http.StatusMovedPermanently)
+		return
+	}
 	c, err := req.Cookie("__ibes_")
 	_ = c
 	if err != nil {
@@ -81,36 +106,44 @@ func register(res http.ResponseWriter, req *http.Request) {
 			HttpOnly: true,
 		})
 	}
-
+	//fmt.Println("Here 1")
 	if req.Method == http.MethodPost {
+		//fmt.Println("Here 2")
 		fName := req.FormValue("fname")
 		lName := req.FormValue("lname")
-		uName := req.FormValue("username")
+		uName := req.FormValue("uname")
 		email := req.FormValue("email")
 		pwd := req.FormValue("password")
-		pwdConfirm := req.FormValue("re-password")
+		pwdConfirm := req.FormValue("rePassword")
 		if pwd == pwdConfirm {
 			password := []byte(pwd)
 			hPass := hashAndSalt(password)
 			if err != nil {
 				err := tpl.ExecuteTemplate(res, "register.gohtml", err)
 				if err != nil {
-					log.Fatalln("hash failed: ", err)
+					fmt.Println("template didn't execute: ", err)
 				}
 			}
 			uuidreg, err := uuid.NewUUID()
 			if err != nil {
 				err := tpl.ExecuteTemplate(res, "register.gohtml", err)
 				if err != nil {
-					log.Fatalln("template didn't execute: ", err)
+					fmt.Println("template didn't execute: ", err)
 				}
 			}
-			us := entities.User{uuidreg.String(), fName, lName, uName, email, hPass}
+			us := entities.User{
+				UUID:     uuidreg.String(),
+				Fname:    fName,
+				Lname:    lName,
+				Uname:    uName,
+				Email:    email,
+				Password: hPass,
+			}
 			db, err := config.GetMSSQLDB()
 			if err != nil {
 				err := tpl.ExecuteTemplate(res, "register.gohtml", err)
 				if err != nil {
-					log.Fatalln("template didn't execute: ", err)
+					fmt.Println("template didn't execute: ", err)
 				}
 			} else {
 				userConnection := users.UserConnection{
@@ -128,7 +161,7 @@ func register(res http.ResponseWriter, req *http.Request) {
 			if err != nil {
 				err := tpl.ExecuteTemplate(res, "register.gohtml", err)
 				if err != nil {
-					log.Fatalln("template didn't execute: ", err)
+					fmt.Println("template didn't execute: ", err)
 				}
 			}
 			// create a user
@@ -138,13 +171,13 @@ func register(res http.ResponseWriter, req *http.Request) {
 		} else {
 			err := tpl.ExecuteTemplate(res, "register.gohtml", nil)
 			if err != nil {
-				log.Fatalln("template didn't execute: ", err)
+				fmt.Println("template didn't execute: ", err)
 			}
 		}
 	} else {
 		err := tpl.ExecuteTemplate(res, "register.gohtml", nil)
 		if err != nil {
-			log.Fatalln("template didn't execute: ", err)
+			fmt.Println("template didn't execute: ", err)
 		}
 	}
 }
@@ -164,16 +197,18 @@ func forgotPassword(res http.ResponseWriter, req *http.Request) {
 }
 
 func hashAndSalt(pwd []byte) string {
-
-	// Use GenerateFromPassword to hash & salt pwd.
-	// MinCost is just an integer constant provided by the bcrypt
-	// package along with DefaultCost & MaxCost.
-	// The cost can be any value you want provided it isn't lower
-	// than the MinCost (4)
 	hash, err := bcrypt.GenerateFromPassword(pwd, bcrypt.MinCost)
 	if err != nil {
 		log.Println(err)
-	} // GenerateFromPassword returns a byte slice so we need to
-	// convert the bytes to a string and return it
+	}
 	return string(hash)
+}
+
+func ifLoggedIn(req *http.Request) bool {
+	c, err := req.Cookie("__ibes_")
+	_ = c
+	if err != nil {
+		return false
+	}
+	return true
 }

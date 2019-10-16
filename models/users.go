@@ -43,6 +43,16 @@ func (userConnection UserConnection) GetUserByID(uuid string) ([]entities.User, 
 	}
 }
 
+func (userConnection UserConnection) CheckLogin(uname string, password string) bool {
+	fmt.Println(uname)
+	return true
+}
+
+func (userConnection UserConnection) CheckUsername(uname string) bool {
+	fmt.Println(uname)
+	return true
+}
+
 func (userConnection UserConnection) CreateUser(us entities.User) int {
 	fmt.Println(us)
 	return 7
