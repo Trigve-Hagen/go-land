@@ -35,6 +35,7 @@ func main() {
 	http.HandleFunc("/", index)
 	http.HandleFunc("/about", about)
 	http.HandleFunc("/contact", contact)
+	http.HandleFunc("/email", email)
 	http.HandleFunc("/login", login)
 	http.HandleFunc("/logout", logout)
 	http.HandleFunc("/register", register)
@@ -63,6 +64,14 @@ func about(res http.ResponseWriter, req *http.Request) {
 func contact(res http.ResponseWriter, req *http.Request) {
 	loggedIn := ifLoggedIn(req)
 	err := tpl.ExecuteTemplate(res, "contact.gohtml", loggedIn)
+	if err != nil {
+		log.Fatalln("template didn't execute: ", err)
+	}
+}
+
+func email(res http.ResponseWriter, req *http.Request) {
+	loggedIn := ifLoggedIn(req)
+	err := tpl.ExecuteTemplate(res, "contactEmail.gohtml", loggedIn)
 	if err != nil {
 		log.Fatalln("template didn't execute: ", err)
 	}

@@ -48,8 +48,8 @@ func (userConnection UserConnection) CheckLoginForm(uname string, password strin
 	return true
 }
 
-func (userConnection UserConnection) CheckUsername(uname string) bool {
-	fmt.Println(uname)
+func (userConnection UserConnection) CheckForUnique(rowName string, rowValue string) bool {
+	fmt.Println(rowValue)
 	return true
 }
 
