@@ -29,7 +29,7 @@ func (userSession UserSession) GetSessionByID(uuid string) ([]entities.Session, 
 				session := entities.Session{
 					ID:   id,
 					UUID: uuid,
-					Date: date,
+					DateTime: date,
 				}
 				sessions = append(sessions, session)
 			}
@@ -55,4 +55,9 @@ func (userSession UserSession) alreadyLoggedIn(req *http.Request, use UserConnec
 func (userSession UserSession) CreateSession(us entities.User) int {
 	fmt.Println(us)
 	return 7
+}
+
+func (userSession UserSession) CleanSessions(us entities.User) bool {
+	fmt.Println(us)
+	return true
 }

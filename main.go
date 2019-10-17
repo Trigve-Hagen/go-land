@@ -21,7 +21,8 @@ var formErrors = map[string]string{}
 var data = map[string]entities.User{}
 
 type ViewData struct {
-	*entities.User
+	IfLoggedIn bool
+	Errors     map[string]string
 }
 
 func init() {
@@ -42,39 +43,27 @@ func main() {
 	http.HandleFunc("/forgot/password", forgotPassword)
 	http.HandleFunc("/auth/admin", admin)
 	http.Handle("/public/", http.StripPrefix("/public", http.FileServer(http.Dir("public"))))
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":3000", nil)
 }
 
 func index(res http.ResponseWriter, req *http.Request) {
-	loggedIn := ifLoggedIn(req)
-	err := tpl.ExecuteTemplate(res, "index.gohtml", loggedIn)
-	if err != nil {
-		log.Fatalln("template didn't execute: ", err)
-	}
+	vwd := ViewData{}
+	render(res, "index.gohtml", vwd)
 }
 
 func about(res http.ResponseWriter, req *http.Request) {
-	loggedIn := ifLoggedIn(req)
-	err := tpl.ExecuteTemplate(res, "about.gohtml", loggedIn)
-	if err != nil {
-		log.Fatalln("template didn't execute: ", err)
-	}
+	vwd := ViewData{}
+	render(res, "about.gohtml", vwd)
 }
 
 func contact(res http.ResponseWriter, req *http.Request) {
-	loggedIn := ifLoggedIn(req)
-	err := tpl.ExecuteTemplate(res, "contact.gohtml", loggedIn)
-	if err != nil {
-		log.Fatalln("template didn't execute: ", err)
-	}
+	vwd := ViewData{}
+	render(res, "contact.gohtml", vwd)
 }
 
 func email(res http.ResponseWriter, req *http.Request) {
-	loggedIn := ifLoggedIn(req)
-	err := tpl.ExecuteTemplate(res, "contactEmail.gohtml", loggedIn)
-	if err != nil {
-		log.Fatalln("template didn't execute: ", err)
-	}
+	vwd := ViewData{}
+	render(res, "email.gohtml", vwd)
 }
 
 func logout(res http.ResponseWriter, req *http.Request) {
@@ -86,34 +75,33 @@ func logout(res http.ResponseWriter, req *http.Request) {
 		Secure:   false,
 		HttpOnly: true,
 	})
-	err := tpl.ExecuteTemplate(res, "index.gohtml", nil)
-	if err != nil {
-		log.Fatalln("template didn't execute: ", err)
-	}
+	vwd := ViewData{}
+	vwd.IfLoggedIn = false
+	render(res, "index.gohtml", vwd)
 }
 
 func login(res http.ResponseWriter, req *http.Request) {
-	if ifLoggedIn(req) {
-		err := tpl.ExecuteTemplate(res, "admin.gohtml", true)
-		if err != nil {
-			log.Fatalln("template didn't execute: ", err)
-		}
-		//http.Redirect(res, req, "/auth/admin", http.StatusMovedPermanently)
+	vwd := ViewData{}
+	if vwd.ifLoggedIn(req) {
+		render(res, "admin.gohtml", vwd)
 		return
 	}
-	//fmt.Println("Here 1")
+
 	if req.Method == http.MethodPost {
-		//fmt.Println("Here 2")
 		uName := req.FormValue("uname")
 		pwd := req.FormValue("password")
 		db, err := config.GetMSSQLDB()
 		if err != nil {
-			log.Fatalln("error connecting: ", err)
+			vwd.Errors["Server"] = "Could not connect to database."
+			render(res, "login.gohtml", vwd)
+			return
 		}
 
 		uuid, err := uuid.NewUUID()
 		if err != nil {
-			log.Fatalln("uuid failed: ", err)
+			vwd.Errors["Server"] = "Failed to create UUID."
+			render(res, "login.gohtml", vwd)
+			return
 		}
 		http.SetCookie(res, &http.Cookie{
 			Name:     "__ibes_",
@@ -127,135 +115,102 @@ func login(res http.ResponseWriter, req *http.Request) {
 			Db: db,
 		}
 		if userConnection.CheckLoginForm(uName, pwd) {
-			err := tpl.ExecuteTemplate(res, "admin.gohtml", true)
-			if err != nil {
-				log.Fatalln("template didn't execute: ", err)
-			}
-			//http.Redirect(res, req, "/auth/admin", http.StatusMovedPermanently)
+			render(res, "admin.gohtml", vwd)
 			return
 		}
-	} else {
-		err := tpl.ExecuteTemplate(res, "login.gohtml", false)
-		if err != nil {
-			log.Fatalln("template didn't execute: ", err)
-		}
 	}
+	render(res, "login.gohtml", vwd)
 }
 
 func register(res http.ResponseWriter, req *http.Request) {
-	if ifLoggedIn(req) {
-		err := tpl.ExecuteTemplate(res, "admin.gohtml", true)
-		if err != nil {
-			log.Fatalln("template didn't execute: ", err)
-		}
-		//http.Redirect(res, req, "/auth/admin", http.StatusMovedPermanently)
+	vwd := ViewData{}
+	if vwd.ifLoggedIn(req) {
+		render(res, "admin.gohtml", vwd)
 		return
 	}
 
-	//fmt.Println("Here 1")
 	if req.Method == http.MethodPost {
-		//fmt.Println("Here 2")
 		fName := req.FormValue("fname")
 		lName := req.FormValue("lname")
 		uName := req.FormValue("uname")
 		email := req.FormValue("email")
 		pwd := req.FormValue("password")
 		pwdConfirm := req.FormValue("rePassword")
-		if pwd == pwdConfirm {
-			password := []byte(pwd)
-			hPass := hashAndSalt(password)
-			uuidreg, err := uuid.NewUUID()
-			if err != nil {
-				err := tpl.ExecuteTemplate(res, "register.gohtml", err)
-				if err != nil {
-					fmt.Println("template didn't execute: ", err)
-				}
-			}
-			us := entities.User{
-				UUID:     uuidreg.String(),
-				Fname:    fName,
-				Lname:    lName,
-				Uname:    uName,
-				Email:    email,
-				Password: hPass,
-			}
-			db, err := config.GetMSSQLDB()
-			if err != nil {
-				err := tpl.ExecuteTemplate(res, "register.gohtml", err)
-				if err != nil {
-					fmt.Println("template didn't execute: ", err)
-				}
-			} else {
-
-				uuid, err := uuid.NewUUID()
-				if err != nil {
-					log.Fatalln("uuid failed: ", err)
-				}
-				http.SetCookie(res, &http.Cookie{
-					Name:     "__ibes_",
-					Value:    uuid.String(),
-					Path:     "/",
-					Secure:   false,
-					HttpOnly: true,
-				})
-
-				userConnection := users.UserConnection{
-					Db: db,
-				}
-				userid := userConnection.CreateUser(us)
-				fmt.Println(userid)
-
-				userSession := sessions.UserSession{
-					Db: db,
-				}
-				sessionid := userSession.CreateSession(us)
-				fmt.Println(sessionid)
-			}
-			if err != nil {
-				err := tpl.ExecuteTemplate(res, "register.gohtml", err)
-				if err != nil {
-					fmt.Println("template didn't execute: ", err)
-				}
-			}
-			// create a user
-			// create a session
-
-			http.Redirect(res, req, "/auth/admin", http.StatusMovedPermanently)
-		} else {
-			err := tpl.ExecuteTemplate(res, "register.gohtml", nil)
-			if err != nil {
-				fmt.Println("template didn't execute: ", err)
-			}
+		if pwd != pwdConfirm {
+			vwd.Errors["Form"] = "Passwords do not match."
+			render(res, "register.gohtml", vwd)
+			return
 		}
-	} else {
-		err := tpl.ExecuteTemplate(res, "register.gohtml", nil)
+		password := []byte(pwd)
+		hPass := hashAndSalt(password)
+		uuidreg, err := uuid.NewUUID()
 		if err != nil {
-			fmt.Println("template didn't execute: ", err)
+			vwd.Errors["Server"] = "Failed to create registration UUID."
+			render(res, "register.gohtml", vwd)
+			return
 		}
+		us := entities.User{
+			UUID:     uuidreg.String(),
+			Fname:    fName,
+			Lname:    lName,
+			Uname:    uName,
+			Email:    email,
+			Password: hPass,
+			Role:     1,
+		}
+		db, err := config.GetMSSQLDB()
+		if err != nil {
+			vwd.Errors["Server"] = "Could not connect to database."
+			render(res, "register.gohtml", vwd)
+			return
+		}
+		uuid, err := uuid.NewUUID()
+		if err != nil {
+			vwd.Errors["Server"] = "Failed to create session UUID."
+			render(res, "register.gohtml", vwd)
+			return
+		}
+		http.SetCookie(res, &http.Cookie{
+			Name:     "__ibes_",
+			Value:    uuid.String(),
+			Path:     "/",
+			Secure:   false,
+			HttpOnly: true,
+		})
+		data := us
+		userConnection := users.UserConnection{
+			Db: db,
+		}
+		userid := userConnection.CreateUser(data)
+		fmt.Println(userid)
+
+		userSession := sessions.UserSession{
+			Db: db,
+		}
+		sessionid := userSession.CreateSession(data)
+		fmt.Println(sessionid)
+
+		render(res, "/auth/admin", vwd)
 	}
+	render(res, "register.gohtml", vwd)
 }
 
 func admin(res http.ResponseWriter, req *http.Request) {
-	loggedIn := ifLoggedIn(req)
-	err := tpl.ExecuteTemplate(res, "admin.gohtml", loggedIn)
-	if err != nil {
-		log.Fatalln("template didn't execute: ", err)
+	vwd := ViewData{}
+	if vwd.ifLoggedIn(req) {
+		render(res, "admin.gohtml", vwd)
+		return
 	}
+	render(res, "index.gohtml", vwd)
 }
 
 func forgotPassword(res http.ResponseWriter, req *http.Request) {
-	if ifLoggedIn(req) {
-		err := tpl.ExecuteTemplate(res, "admin.gohtml", true)
-		if err != nil {
-			log.Fatalln("template didn't execute: ", err)
-		}
-		//http.Redirect(res, req, "/auth/admin", http.StatusMovedPermanently)
+	vwd := ViewData{}
+	if vwd.ifLoggedIn(req) {
+		render(res, "admin.gohtml", vwd)
 		return
 	}
-	err := tpl.ExecuteTemplate(res, "forgot-password.gohtml", nil)
-	if err != nil {
-		log.Fatalln("template didn't execute: ", err)
-	}
+	render(res, "forgot-password.gohtml", vwd)
 }
 
 func hashAndSalt(pwd []byte) string {
@@ -266,11 +221,20 @@ func hashAndSalt(pwd []byte) string {
 	return string(hash)
 }
 
-func ifLoggedIn(req *http.Request) bool {
+func (vwd *ViewData) ifLoggedIn(req *http.Request) bool {
 	c, err := req.Cookie("__ibes_")
 	_ = c
+
 	if err != nil {
+		vwd.IfLoggedIn = false
 		return false
 	}
+	vwd.IfLoggedIn = true
 	return true
+}
+
+func render(res http.ResponseWriter, filename string, data interface{}) {
+	if err := tpl.ExecuteTemplate(res, filename, data); err != nil {
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+	}
 }

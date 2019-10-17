@@ -8,4 +8,5 @@ type User struct {
 	Email    string
 	Password string
 	Admin    bool
+	Role     int8
 }

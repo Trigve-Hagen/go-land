@@ -1,7 +1,7 @@
 {{define "upper-header"}}
     <div class="upper-header-nav">
         <div class="upper-menu">
-            {{if .}}
+            {{if .IfLoggedIn}}
                 <a href="/logout" class="upper-menu-links">Logout</a>
             {{else}}
                 <a href="/login" class="upper-menu-links">Login</a>
