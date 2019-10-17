@@ -16,9 +16,18 @@
                         Login
                     </h3>
                     <form action="/login" method="POST">
+                        {{ with .Errors.Uname }}
+                            <p class="error">{{ . }}</p>
+                        {{ end }}
                         <label for="uname" class="form-label">Username</label>
+                        {{ if .Uname }}
+                        <input type="text" name="uname" id="uname" class="form-item" value="{{ .Uname }}"/>
+                        {{ else }}
                         <input type="text" name="uname" id="uname" class="form-item" value=""/>
-
+                        {{ end }}
+                        {{ with .Errors.Password }}
+                            <p class="error">{{ . }}</p>
+                        {{ end }}
                         <label for="password" class="form-label">Password</label>
                         <input type="password" name="password" id="password" class="form-item" value=""/>
                         <input type="submit" name="submit-login" id="edit-submit" value="Login"/>

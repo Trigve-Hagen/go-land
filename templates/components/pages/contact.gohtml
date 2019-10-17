@@ -15,15 +15,36 @@
                     <h3 class="page-title">
                         Contact Page
                     </h3>
-                    <form action="/" method="POST">
-                        <label for="name" class="form-label">Name</label>
-                        <input type="text" name="name" id="name" class="form-item" value=""/>
-                        <label for="email" class="form-label">Email</label>
-                        <input type="email" name="username" id="email" class="form-item" value=""/>
+                    <form action="/contact" method="POST">
+                        {{ with .Errors.Name }}
+                            <p class="error">{{ . }}</p>
+                        {{ end }}
+                        <label for="name" class="form-label">Name *</label>
+                        {{ if .Name }}
+                            <input type="text" name="name" id="name" placeholder="Letters and spaces" class="form-item" value="{{ .Name }}"/>
+                        {{ else }}
+                            <input type="text" name="name" id="name" placeholder="Letters and spaces" class="form-item" value=""/>
+                        {{ end }}
+                        {{ with .Errors.Email }}
+                            <p class="error">{{ . }}</p>
+                        {{ end }}
+                        <label for="email" class="form-label">Email *</label>
+                        {{ if .Email }}
+                            <input type="email" name="email" id="email" placeholder="something@somewhere.com" class="form-item" value="{{ .Email }}"/>
+                        {{ else }}
+                            <input type="email" name="email" id="email" placeholder="something@somewhere.com" class="form-item" value=""/>
+                        {{ end }}
                         <label for="subject" class="form-label">Subject</label>
-                        <input type="text" name="subject" id="subject" class="form-item" value=""/>
-                        <label for="message" class="form-label">Message</label>
-                        <textarea name="message" col="4" id="message"></textarea>
+                        <input type="text" name="subject" id="subject" placeholder="Letters and spaces" class="form-item" value=""/>
+                        {{ with .Errors.Message }}
+                            <p class="error">{{ . }}</p>
+                        {{ end }}
+                        <label for="message" class="form-label">Message *</label>
+                        {{ if .Message }}
+                            <textarea name="message" col="4" id="message">{{ .Message }}</textarea>
+                        {{ else }}
+                            <textarea name="message" col="4" id="message"></textarea>
+                        {{ end }}
                         <input type="submit" name="submit-contact" id="edit-submit" value="Send"/>
                     </form>
                 </div>
