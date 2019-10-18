@@ -15,6 +15,9 @@
                     <h3 class="page-title">
                         Login
                     </h3>
+                    {{ with .Errors.Server }}
+                        <p class="error">{{ . }}</p>
+                    {{ end }}
                     <form action="/login" method="POST">
                         {{ with .Errors.Uname }}
                             <p class="error">{{ . }}</p>

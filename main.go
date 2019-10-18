@@ -22,15 +22,6 @@ var data = map[string]entities.User{}
 
 type viewData struct {
 	IfLoggedIn bool
-	Name       string
-	Fname      string
-	Lname      string
-	Email      string
-	Subject    string
-	Message    string
-	Uname      string
-	Password   string
-	RePassword string
 	Errors     map[string]string
 }
 
@@ -57,29 +48,31 @@ func main() {
 
 func index(res http.ResponseWriter, req *http.Request) {
 	vwd := viewData{}
-	vwd.ifLoggedIn(req)
+	vwd.IfLoggedIn = ifLoggedIn(req)
 	render(res, "index.gohtml", vwd)
 }
 
 func about(res http.ResponseWriter, req *http.Request) {
 	vwd := viewData{}
-	vwd.ifLoggedIn(req)
+	vwd.IfLoggedIn = ifLoggedIn(req)
 	render(res, "about.gohtml", vwd)
 }
 
 func contact(res http.ResponseWriter, req *http.Request) {
-	vwd := viewData{}
-	vwd.ifLoggedIn(req)
+	msg := &Message{
+		Name:       "",
+		Email:      "",
+		Subject:    "",
+		Message:    "",
+		IfLoggedIn: ifLoggedIn(req),
+	}
 	if req.Method == http.MethodPost {
-		msg := &Message{
-			Name:    req.FormValue("name"),
-			Email:   req.FormValue("email"),
-			Subject: req.FormValue("subject"),
-			Message: req.FormValue("message"),
-		}
-		if msg.ValidateMessage() == false {
-			msg.IfLoggedIn = vwd.IfLoggedIn
+		msg.Name = req.FormValue("name")
+		msg.Email = req.FormValue("email")
+		msg.Subject = req.FormValue("subject")
+		msg.Message = req.FormValue("message")
 
+		if msg.ValidateMessage() == false {
 			render(res, "contact.gohtml", msg)
 			return
 		}
@@ -87,12 +80,15 @@ func contact(res http.ResponseWriter, req *http.Request) {
 			http.Error(res, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		render(res, "contact.gohtml", msg)
+		return
 	}
-	render(res, "contact.gohtml", vwd)
+	render(res, "contact.gohtml", msg)
 }
 
 func email(res http.ResponseWriter, req *http.Request) {
 	vwd := viewData{}
+	vwd.IfLoggedIn = ifLoggedIn(req)
 	render(res, "email.gohtml", vwd)
 }
 
@@ -111,18 +107,20 @@ func logout(res http.ResponseWriter, req *http.Request) {
 }
 
 func login(res http.ResponseWriter, req *http.Request) {
-	vwd := viewData{}
-	if vwd.ifLoggedIn(req) {
-		render(res, "admin.gohtml", vwd)
+	lgn := &Login{
+		Uname:      "",
+		Password:   "",
+		IfLoggedIn: ifLoggedIn(req),
+	}
+	if lgn.IfLoggedIn == true {
+		render(res, "admin.gohtml", lgn)
 		return
 	}
 
 	if req.Method == http.MethodPost {
-		uName := req.FormValue("uname")
-		pwd := req.FormValue("password")
 		lgn := &Login{
-			Uname:    uName,
-			Password: pwd,
+			Uname:    req.FormValue("uname"),
+			Password: req.FormValue("password"),
 		}
 		if lgn.ValidateLogin() == false {
 			lgn.IfLoggedIn = false
@@ -131,14 +129,16 @@ func login(res http.ResponseWriter, req *http.Request) {
 		}
 		db, err := config.GetMSSQLDB()
 		if err != nil {
-			vwd.Errors["Server"] = "Could not connect to database."
-			render(res, "login.gohtml", vwd)
+			lgn.IfLoggedIn = false
+			lgn.Errors["Server"] = "Could not connect to database."
+			render(res, "login.gohtml", lgn)
 			return
 		}
 		uuid, err := uuid.NewUUID()
 		if err != nil {
-			vwd.Errors["Server"] = "Failed to create UUID."
-			render(res, "login.gohtml", vwd)
+			lgn.IfLoggedIn = false
+			lgn.Errors["Server"] = "Failed to create UUID."
+			render(res, "login.gohtml", lgn)
 			return
 		}
 		http.SetCookie(res, &http.Cookie{
@@ -152,74 +152,71 @@ func login(res http.ResponseWriter, req *http.Request) {
 		userConnection := users.UserConnection{
 			Db: db,
 		}
-		if userConnection.CheckLoginForm(uName, pwd) {
-			vwd.IfLoggedIn = true
-			render(res, "admin.gohtml", vwd)
+		if userConnection.CheckLoginForm(lgn.Uname, lgn.Password) {
+			lgn.IfLoggedIn = true
+			render(res, "admin.gohtml", lgn)
 			return
 		}
 	}
-	render(res, "login.gohtml", vwd)
+	render(res, "login.gohtml", lgn)
 }
 
 func register(res http.ResponseWriter, req *http.Request) {
-	vwd := viewData{}
-	if vwd.ifLoggedIn(req) {
-		render(res, "admin.gohtml", vwd)
+	vreg := &Register{
+		Fname:      "",
+		Lname:      "",
+		Uname:      "",
+		Email:      "",
+		Password:   "",
+		RePassword: "",
+		IfLoggedIn: ifLoggedIn(req),
+	}
+	if vreg.IfLoggedIn == true {
+		render(res, "admin.gohtml", vreg)
 		return
 	}
 
 	if req.Method == http.MethodPost {
-		fName := req.FormValue("fname")
-		lName := req.FormValue("lname")
-		uName := req.FormValue("uname")
-		email := req.FormValue("email")
-		pwd := req.FormValue("password")
-		pwdConfirm := req.FormValue("rePassword")
-		if pwd != pwdConfirm {
-			vwd.Errors["Form"] = "Passwords do not match."
-			render(res, "register.gohtml", vwd)
-			return
-		}
-		password := []byte(pwd)
-		hPass := hashAndSalt(password)
-		uuidreg, err := uuid.NewUUID()
-		if err != nil {
-			vwd.Errors["Server"] = "Failed to create registration UUID."
-			render(res, "register.gohtml", vwd)
-			return
-		}
-		us := entities.User{
-			UUID:     uuidreg.String(),
-			Fname:    fName,
-			Lname:    lName,
-			Uname:    uName,
-			Email:    email,
-			Password: hPass,
-			Role:     1,
-		}
-		vreg := &Register{
-			Fname:      fName,
-			Lname:      lName,
-			Uname:      uName,
-			Email:      email,
-			Password:   pwd,
-			RePassword: pwdConfirm,
-		}
+		vreg.Fname = req.FormValue("fname")
+		vreg.Lname = req.FormValue("lname")
+		vreg.Uname = req.FormValue("uname")
+		vreg.Email = req.FormValue("email")
+		vreg.Password = req.FormValue("password")
+		vreg.RePassword = req.FormValue("rePassword")
+
 		if vreg.ValidateRegister() == false {
-			vreg.IfLoggedIn = false
 			render(res, "register.gohtml", vreg)
 			return
 		}
+
+		password := []byte(vreg.Password)
+		hPass := hashAndSalt(password)
+		uuidreg, err := uuid.NewUUID()
+		if err != nil {
+			vreg.Errors["Server"] = "Failed to create registration UUID."
+			render(res, "register.gohtml", vreg)
+			return
+		}
+
+		us := entities.User{
+			UUID:     uuidreg.String(),
+			Fname:    vreg.Fname,
+			Lname:    vreg.Lname,
+			Uname:    vreg.Uname,
+			Email:    vreg.Email,
+			Password: hPass,
+			Role:     1,
+		}
 		db, err := config.GetMSSQLDB()
 		if err != nil {
-			vwd.Errors["Server"] = "Could not connect to database."
-			render(res, "register.gohtml", vwd)
+			vreg.Errors["Server"] = "Could not connect to database."
+			render(res, "register.gohtml", vreg)
 			return
 		}
 		uuid, err := uuid.NewUUID()
 		if err != nil {
-			vwd.Errors["Server"] = "Failed to create session UUID."
-			render(res, "register.gohtml", vwd)
+			vreg.Errors["Server"] = "Failed to create session UUID."
+			render(res, "register.gohtml", vreg)
 			return
 		}
 		http.SetCookie(res, &http.Cookie{
@@ -242,14 +239,16 @@ func register(res http.ResponseWriter, req *http.Request) {
 		sessionid := userSession.CreateSession(data)
 		fmt.Println(sessionid)
 
-		render(res, "/auth/admin", vwd)
+		render(res, "/auth/admin", vreg)
+		return
 	}
-	render(res, "register.gohtml", vwd)
+	render(res, "register.gohtml", vreg)
 }
 
 func admin(res http.ResponseWriter, req *http.Request) {
 	vwd := viewData{}
-	if vwd.ifLoggedIn(req) {
+	if ifLoggedIn(req) == true {
+		vwd.IfLoggedIn = true
 		render(res, "admin.gohtml", vwd)
 		return
 	}
@@ -258,7 +257,8 @@ func admin(res http.ResponseWriter, req *http.Request) {
 
 func forgotPassword(res http.ResponseWriter, req *http.Request) {
 	vwd := viewData{}
-	if vwd.ifLoggedIn(req) {
+	if ifLoggedIn(req) == true {
+		vwd.IfLoggedIn = true
 		render(res, "admin.gohtml", vwd)
 		return
 	}
@@ -273,16 +273,14 @@ func hashAndSalt(pwd []byte) string {
 	return string(hash)
 }
 
-func (vwd *viewData) ifLoggedIn(req *http.Request) bool {
+func ifLoggedIn(req *http.Request) bool {
 	c, err := req.Cookie("__ibes_")
 	_ = c
 
 	if err != nil {
-		vwd.IfLoggedIn = false
 		return false
 	}
 
-	vwd.IfLoggedIn = true
 	return true
 }
 

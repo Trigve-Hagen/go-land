@@ -105,5 +105,8 @@ func (reg *Register) ValidateRegister() bool {
 	if strings.TrimSpace(reg.RePassword) == "" {
 		reg.Errors["RePassword"] = "Please enter a valid password."
 	}
+	if reg.Password != reg.RePassword {
+		reg.Errors["RePassword"] = "Passwords do not match."
+	}
 	return len(reg.Errors) == 0
 }
