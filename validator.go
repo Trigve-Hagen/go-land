@@ -66,3 +66,44 @@ func (lgn *Login) ValidateLogin() bool {
 
 	return len(lgn.Errors) == 0
 }
+
+type Register struct {
+	Fname      string
+	Lname      string
+	Uname      string
+	Email      string
+	Password   string
+	RePassword string
+	IfLoggedIn bool
+	Errors     map[string]string
+}
+
+func (reg *Register) ValidateRegister() bool {
+	reg.Errors = make(map[string]string)
+
+	usn := regexp.MustCompile("[A-Za-z\\s]+")
+	matched := usn.Match([]byte(reg.Fname))
+	if matched == false {
+		reg.Errors["Fname"] = "Please enter a valid first name."
+	}
+	match := usn.Match([]byte(reg.Lname))
+	if match == false {
+		reg.Errors["Lname"] = "Please enter a valid last name."
+	}
+	mat := usn.Match([]byte(reg.Uname))
+	if mat == false {
+		reg.Errors["Uname"] = "Please enter a valid username."
+	}
+	re := regexp.MustCompile(".+@.+\\..+")
+	m := re.Match([]byte(reg.Email))
+	if m == false {
+		reg.Errors["Email"] = "Please enter a valid email address."
+	}
+	if strings.TrimSpace(reg.Password) == "" {
+		reg.Errors["Password"] = "Please enter a valid password."
+	}
+	if strings.TrimSpace(reg.RePassword) == "" {
+		reg.Errors["RePassword"] = "Please enter a valid password."
+	}
+	return len(reg.Errors) == 0
+}

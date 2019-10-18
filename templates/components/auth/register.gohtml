@@ -16,18 +16,60 @@
                         Register
                     </h3>
                     <form action="/register" method="POST">
+                        {{ with .Errors.Fname }}
+                            <p class="error">{{ . }}</p>
+                        {{ end }}
                         <label for="fname" class="form-label">First Name</label>
-                        <input type="text" name="fname" id="fname" class="form-item" value=""/>
+                        {{ if .Fname }}
+                            <input type="text" name="fname" id="fname" class="form-item" value="{{ .Fname }}"/>
+                        {{ else }}
+                            <input type="text" name="fname" id="fname" class="form-item" value=""/>
+                        {{ end }}
+                        {{ with .Errors.Lname }}
+                            <p class="error">{{ . }}</p>
+                        {{ end }}
                         <label for="lname" class="form-label">Last Name</label>
-                        <input type="text" name="lname" id="lname" class="form-item" value=""/>
+                        {{ if .Lname }}
+                            <input type="text" name="lname" id="lname" class="form-item" value="{{ .Lname }}"/>
+                        {{ else }}
+                            <input type="text" name="lname" id="lname" class="form-item" value=""/>
+                        {{ end }}
+                        {{ with .Errors.Uname }}
+                            <p class="error">{{ . }}</p>
+                        {{ end }}
                         <label for="uname" class="form-label">Username</label>
-                        <input type="text" name="uname" id="uname" class="form-item" value=""/>
+                        {{ if .Uname }}
+                            <input type="text" name="uname" id="uname" class="form-item" value="{{ .Uname }}"/>
+                        {{ else }}
+                            <input type="text" name="uname" id="uname" class="form-item" value=""/>
+                        {{ end }}
+                        {{ with .Errors.Email }}
+                            <p class="error">{{ . }}</p>
+                        {{ end }}
                         <label for="email" class="form-label">Email</label>
-                        <input type="email" name="email" id="email" class="form-item" value=""/>
+                        {{ if .Email }}
+                            <input type="email" name="email" id="email" class="form-item" value="{{ .Email }}"/>
+                        {{ else }}
+                            <input type="email" name="email" id="email" class="form-item" value=""/>
+                        {{ end }}
+                        {{ with .Errors.Password }}
+                            <p class="error">{{ . }}</p>
+                        {{ end }}
                         <label for="password" class="form-label">Password</label>
-                        <input type="password" name="password" id="password" class="form-item" value=""/>
+                        {{ if .Password }}
+                            <input type="password" name="password" id="password" class="form-item" value="{{ .Password }}"/>
+                        {{ else }}
+                            <input type="password" name="password" id="password" class="form-item" value=""/>
+                        {{ end }}
+                        {{ with .Errors.RePassword }}
+                            <p class="error">{{ . }}</p>
+                        {{ end }}
                         <label for="rePassword" class="form-label">Confirm Password</label>
-                        <input type="password" name="rePassword" id="rePassword" class="form-item" value=""/>
+                        {{ if .RePassword }}
+                            <input type="password" name="rePassword" id="rePassword" class="form-item" value="{{ .RePassword }}"/>
+                        {{ else }}
+                            <input type="password" name="rePassword" id="rePassword" class="form-item" value=""/>
+                        {{ end }}
                         <input type="submit" name="submit-register" id="edit-submit" value="Register"/>
                         <input type="submit" name="submit-register-facebook" id="edit-submit" value="Register With Facebook"/>
                     </form>

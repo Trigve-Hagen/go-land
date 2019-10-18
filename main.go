@@ -23,11 +23,14 @@ var data = map[string]entities.User{}
 type viewData struct {
 	IfLoggedIn bool
 	Name       string
+	Fname      string
+	Lname      string
 	Email      string
 	Subject    string
 	Message    string
 	Uname      string
 	Password   string
+	RePassword string
 	Errors     map[string]string
 }
 
@@ -193,6 +196,19 @@ func register(res http.ResponseWriter, req *http.Request) {
 			Email:    email,
 			Password: hPass,
 			Role:     1,
+		}
+		vreg := &Register{
+			Fname:      fName,
+			Lname:      lName,
+			Uname:      uName,
+			Email:      email,
+			Password:   pwd,
+			RePassword: pwdConfirm,
+		}
+		if vreg.ValidateRegister() == false {
+			vreg.IfLoggedIn = false
+			render(res, "register.gohtml", vreg)
+			return
 		}
 		db, err := config.GetMSSQLDB()
 		if err != nil {
