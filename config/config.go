@@ -16,12 +16,12 @@ func GetMSSQLDB() (db *sql.DB, err error) {
 	password := "password"
 	connString := fmt.Sprintf("server=%s;user id=%s;password=%s;port=%d",
 		server, user, password, port)
-	db, err = sql.Open("mssql", connString)
+	db, err = sql.Open("sqlserver", connString)
 	if err != nil {
 		log.Fatal("Error creating connection pool: " + err.Error())
 	}
 	log.Printf("Connected!\n")
-	defer db.Close()
+	//defer db.Close()
 
 	SelectVersion(db)
 

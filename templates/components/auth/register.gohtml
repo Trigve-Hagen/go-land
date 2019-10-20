@@ -15,6 +15,9 @@
                     <h3 class="page-title">
                         Register
                     </h3>
+                    {{ with .Errors.Server }}
+                        <p class="error">{{ . }}</p>
+                    {{ end }}
                     <form action="/register" method="POST">
                         {{ with .Errors.Fname }}
                             <p class="error">{{ . }}</p>

@@ -27,8 +27,7 @@ func (userSession UserSession) GetSessionByID(uuid string) ([]entities.Session, 
 				return nil, err
 			} else {
 				session := entities.Session{
-					ID:   id,
-					UUID: uuid,
+					UUID:     uuid,
 					DateTime: date,
 				}
 				sessions = append(sessions, session)
@@ -52,7 +51,7 @@ func (userSession UserSession) alreadyLoggedIn(req *http.Request, use UserConnec
 	return true
 }
 
-func (userSession UserSession) CreateSession(us entities.User) int {
+func (userSession UserSession) CreateSession(us entities.Session) int {
 	fmt.Println(us)
 	return 7
 }

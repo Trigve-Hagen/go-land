@@ -12,6 +12,7 @@ type Message struct {
 	Email      string
 	Subject    string
 	Message    string
+	Role       int
 	IfLoggedIn bool
 	Errors     map[string]string
 }
@@ -48,6 +49,7 @@ func (msg *Message) Deliver() error {
 type Login struct {
 	Uname      string
 	Password   string
+	Role       int
 	IfLoggedIn bool
 	Errors     map[string]string
 }
@@ -75,6 +77,7 @@ type Register struct {
 	Password   string
 	RePassword string
 	IfLoggedIn bool
+	Role       int
 	Errors     map[string]string
 }
 
