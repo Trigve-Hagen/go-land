@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// Message is the structure used for the contact form.
 type Message struct {
 	Name       string
 	Email      string
@@ -17,6 +18,7 @@ type Message struct {
 	Errors     map[string]string
 }
 
+// ValidateMessage is used to validate the contact form.
 func (msg *Message) ValidateMessage() bool {
 	msg.Errors = make(map[string]string)
 
@@ -35,6 +37,7 @@ func (msg *Message) ValidateMessage() bool {
 	return len(msg.Errors) == 0
 }
 
+// Deliver is used to deliver the mail for the contact form.
 func (msg *Message) Deliver() error {
 	to := []string{"someone@example.com"}
 	body := fmt.Sprintf("Reply-To: %v\r\nSubject: New Message\r\n%v", msg.Email, msg.Message)
@@ -46,6 +49,7 @@ func (msg *Message) Deliver() error {
 	return smtp.SendMail("smtp.gmail.com:587", auth, msg.Email, to, []byte(body))
 }
 
+// Login is the structure used for the contact form.
 type Login struct {
 	Uname      string
 	Password   string
@@ -54,6 +58,7 @@ type Login struct {
 	Errors     map[string]string
 }
 
+// ValidateLogin is used to validate the login form.
 func (lgn *Login) ValidateLogin() bool {
 	lgn.Errors = make(map[string]string)
 
@@ -69,6 +74,7 @@ func (lgn *Login) ValidateLogin() bool {
 	return len(lgn.Errors) == 0
 }
 
+// Register is the structure used for the contact form.
 type Register struct {
 	Fname      string
 	Lname      string
@@ -77,10 +83,11 @@ type Register struct {
 	Password   string
 	RePassword string
 	IfLoggedIn bool
-	Role       int
+	Userrole   int8
 	Errors     map[string]string
 }
 
+// ValidateRegister is used to validate the register form.
 func (reg *Register) ValidateRegister() bool {
 	reg.Errors = make(map[string]string)
 

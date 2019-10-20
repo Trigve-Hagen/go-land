@@ -9,7 +9,6 @@ import (
 
 	"github.com/Trigve-Hagen/rlayouts/config"
 	"github.com/Trigve-Hagen/rlayouts/entities"
-	sessions "github.com/Trigve-Hagen/rlayouts/models"
 	users "github.com/Trigve-Hagen/rlayouts/models"
 	"golang.org/x/crypto/bcrypt"
 
@@ -191,6 +190,24 @@ func login(res http.ResponseWriter, req *http.Request) {
 			render(res, "login.gohtml", lgn)
 			return
 		}
+
+		dt := time.Now().Format("2006-01-01 03:04:05")
+		usersess := entities.Session{
+			UUID:     uuidSess.String(),
+			UserUUID: user.UUID,
+			DateTime: dt,
+		}
+		userSession := users.UserSession{
+			Db: db,
+		}
+		sess, err := userSession.CreateSession(usersess)
+		_ = sess
+		if err != nil {
+			lgn.IfLoggedIn = false
+			lgn.Errors["Server"] = "Failed to create a session."
+			render(res, "login.gohtml", lgn)
+			return
+		}
 		render(res, "admin.gohtml", user)
 		return
 	}
@@ -219,6 +236,7 @@ func register(res http.ResponseWriter, req *http.Request) {
 		vreg.Email = req.FormValue("email")
 		vreg.Password = req.FormValue("password")
 		vreg.RePassword = req.FormValue("rePassword")
+		vreg.Userrole = 2
 
 		if vreg.ValidateRegister() == false {
 			render(res, "register.gohtml", vreg)
@@ -253,31 +271,44 @@ func register(res http.ResponseWriter, req *http.Request) {
 			HttpOnly: true,
 		})
 
-		use := entities.User{
+		user := entities.User{
 			UUID:     uuidreg.String(),
 			Fname:    vreg.Fname,
 			Lname:    vreg.Lname,
 			Uname:    vreg.Uname,
 			Email:    vreg.Email,
 			Password: hPass,
-			Role:     1,
+			Userrole: 2,
 		}
 		userConnection := users.UserConnection{
 			Db: db,
 		}
-		userid := userConnection.CreateUser(use)
-		fmt.Println(userid)
-
-		ses := entities.Session{
-			UUID:     uuidSess.String(),
-			UserUUID: uuidreg.String(),
+		user, err = userConnection.CreateUser(user)
+		if err != nil {
+			vreg.Errors["Server"] = "Failed to create user."
+			render(res, "register.gohtml", vreg)
+			return
 		}
-		userSession := sessions.UserSession{
+		fmt.Println(user)
+
+		dt := time.Now().Format("2006-01-01 03:04:05")
+		usersess := entities.Session{
+			UUID:     uuidSess.String(),
+			UserUUID: user.UUID,
+			DateTime: dt,
+		}
+		userSession := users.UserSession{
 			Db: db,
 		}
-		sessionid := userSession.CreateSession(ses)
-		fmt.Println(sessionid)
-
+		sess, err := userSession.CreateSession(usersess)
+		_ = sess
+		if err != nil {
+			vreg.IfLoggedIn = false
+			vreg.Errors["Server"] = "Failed to create a session."
+			render(res, "register.gohtml", vreg)
+			return
+		}
+		vreg.IfLoggedIn = true
 		render(res, "admin.gohtml", vreg)
 		return
 	}

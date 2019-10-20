@@ -10,10 +10,12 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// UserConnection references the database connection.
 type UserConnection struct {
 	Db *sql.DB
 }
 
+// GetUserByID gets the row in Users table associated with the given UUID.
 func (userConnection UserConnection) GetUserByID(uuid string) (entities.User, error) {
 	const (
 		execTvp = "spGetUserByUUID @UUID"
@@ -50,6 +52,7 @@ func (userConnection UserConnection) GetUserByID(uuid string) (entities.User, er
 	return user, err
 }
 
+// CheckLoginForm takes the username from login form and gets the row in the database.
 func (userConnection UserConnection) CheckLoginForm(uname string) (entities.User, error) {
 	const (
 		execTvp = "spCheckLogin @Uname"
@@ -86,11 +89,13 @@ func (userConnection UserConnection) CheckLoginForm(uname string) (entities.User
 	return user, err
 }
 
+// CheckForUnique could check for uniqueness but the check is done in the database so im going to see what is returned.
 func (userConnection UserConnection) CheckForUnique(rowName string, rowValue string) bool {
 	fmt.Println(rowValue)
 	return true
 }
 
+// CreateAdminUserIfNotExists is called in main.go init and creates an admin user if one does not exist.
 func (userConnection UserConnection) CreateAdminUserIfNotExists() (entities.User, error) {
 	password := []byte("password")
 	hPass := hashAndSalt(password)
@@ -128,9 +133,26 @@ func (userConnection UserConnection) CreateAdminUserIfNotExists() (entities.User
 	return us, nil
 }
 
-func (userConnection UserConnection) CreateUser(us entities.User) int {
-	fmt.Println(us)
-	return 7
+// CreateUser is call in Register and creates a new user.
+func (userConnection UserConnection) CreateUser(us entities.User) (entities.User, error) {
+	const (
+		execTvp = "spCreateAdminIfNotExists @UUID, @Fname, @Lname, @Uname, @Email, @Password, @Facebookid, @Userrole"
+	)
+	_, err := userConnection.Db.Exec(execTvp,
+		sql.Named("UUID", us.UUID),
+		sql.Named("Fname", us.Fname),
+		sql.Named("Lname", us.Lname),
+		sql.Named("Uname", us.Uname),
+		sql.Named("Email", us.Email),
+		sql.Named("Password", us.Password),
+		sql.Named("Facebookid", us.Facebookid),
+		sql.Named("Userrole", us.Userrole),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return us, nil
 }
 
 func hashAndSalt(pwd []byte) string {

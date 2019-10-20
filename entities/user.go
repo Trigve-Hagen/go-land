@@ -8,9 +8,8 @@ type User struct {
 	Uname      string
 	Email      string
 	Password   string
-	Role       int
-	Facebookid int
 	Userrole   int8
+	Facebookid int
 	IfLoggedIn bool
 	Errors     map[string]string
 }
