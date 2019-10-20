@@ -38,7 +38,6 @@ var viewData map[string]userData
 
 func init() {
 	tpl = template.Must(template.ParseGlob("templates/*/*/*.gohtml"))
-	fmt.Println("Here 1")
 	db, err := config.GetMSSQLDB()
 	if err != nil {
 		fmt.Println("Database: ", err)
@@ -46,12 +45,7 @@ func init() {
 	userConnection := users.UserConnection{
 		Db: db,
 	}
-	fmt.Println("Here 2")
-	user, err := userConnection.CreateAdminUserIfNotExists()
-	if err != nil {
-		fmt.Println("CreateAdmin: ", err)
-	}
-	fmt.Println("CreateAdminUser: ", user)
+	userConnection.CreateAdminUserIfNotExists()
 	/*for _, t := range tpl.Templates() {
 		fmt.Println(t.Name())
 	}*/
@@ -138,6 +132,7 @@ func logout(res http.ResponseWriter, req *http.Request) {
 }
 
 func login(res http.ResponseWriter, req *http.Request) {
+	//ctx := context.Background()
 	ud := userData{}
 	if ifLoggedIn(req) == true {
 		ud.IfLoggedIn = true
@@ -183,11 +178,21 @@ func login(res http.ResponseWriter, req *http.Request) {
 		userConnection := users.UserConnection{
 			Db: db,
 		}
-		if userConnection.CheckLoginForm(lgn.Uname, lgn.Password) {
-			lgn.IfLoggedIn = true
-			render(res, "admin.gohtml", lgn)
+		user, err := userConnection.CheckLoginForm(lgn.Uname)
+		if err != nil {
+			lgn.IfLoggedIn = false
+			lgn.Errors["Server"] = "Failed to validate user."
+			render(res, "login.gohtml", lgn)
 			return
 		}
+		if err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(lgn.Password)); err != nil {
+			lgn.IfLoggedIn = false
+			lgn.Errors["Server"] = "Failed to validate user."
+			render(res, "login.gohtml", lgn)
+			return
+		}
+		render(res, "admin.gohtml", user)
+		return
 	}
 	render(res, "login.gohtml", lgn)
 }

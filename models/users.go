@@ -14,39 +14,76 @@ type UserConnection struct {
 	Db *sql.DB
 }
 
-func (userConnection UserConnection) GetUserByID(uuid string) ([]entities.User, error) {
-	rows, err := userConnection.Db.Query("CALL spGetUserByUUID @UUID = ?", uuid)
+func (userConnection UserConnection) GetUserByID(uuid string) (entities.User, error) {
+	const (
+		execTvp = "spGetUserByUUID @UUID"
+	)
+	result := userConnection.Db.QueryRow(execTvp,
+		sql.Named("UUID", uuid),
+	)
+	var ID int
+	var nuuid string
+	var fname string
+	var lname string
+	var nuname string
+	var email string
+	var password string
+	var facebookid int
+	var userrole int8
+
+	err := result.Scan(&ID, &nuuid, &fname, &lname, &nuname, &email, &password, &facebookid, &userrole)
+
+	user := entities.User{
+		UUID:       uuid,
+		Fname:      fname,
+		Lname:      lname,
+		Uname:      nuname,
+		Email:      email,
+		Password:   password,
+		Userrole:   userrole,
+		IfLoggedIn: true,
+	}
 	if err != nil {
-		return nil, err
+		fmt.Println(err)
+		return user, err
 	}
-	users := []entities.User{}
-	for rows.Next() {
-		var uuid string
-		var fname string
-		var lname string
-		var uname string
-		var email string
-		var password string
-		err := rows.Scan(&uuid, &fname, &lname, &uname, &email, &password)
-		if err != nil {
-			return nil, err
-		}
-		user := entities.User{
-			UUID:     uuid,
-			Fname:    fname,
-			Lname:    lname,
-			Uname:    uname,
-			Email:    email,
-			Password: password,
-		}
-		users = append(users, user)
-	}
-	return users, nil
+	return user, err
 }
 
-func (userConnection UserConnection) CheckLoginForm(uname string, password string) bool {
-	fmt.Println(uname)
-	return true
+func (userConnection UserConnection) CheckLoginForm(uname string) (entities.User, error) {
+	const (
+		execTvp = "spCheckLogin @Uname"
+	)
+	result := userConnection.Db.QueryRow(execTvp,
+		sql.Named("Uname", uname),
+	)
+	var ID int
+	var uuid string
+	var fname string
+	var lname string
+	var nuname string
+	var email string
+	var password string
+	var facebookid int
+	var userrole int8
+
+	err := result.Scan(&ID, &uuid, &fname, &lname, &nuname, &email, &password, &facebookid, &userrole)
+
+	user := entities.User{
+		UUID:       uuid,
+		Fname:      fname,
+		Lname:      lname,
+		Uname:      nuname,
+		Email:      email,
+		Password:   password,
+		Userrole:   userrole,
+		IfLoggedIn: true,
+	}
+	if err != nil {
+		fmt.Println(err)
+		return user, err
+	}
+	return user, err
 }
 
 func (userConnection UserConnection) CheckForUnique(rowName string, rowValue string) bool {
