@@ -9,11 +9,13 @@ import (
 
 // Message is the structure used for the contact form.
 type Message struct {
+	Fname      string
+	Lname      string
 	Name       string
 	Email      string
 	Subject    string
 	Message    string
-	Role       int
+	Userrole   int
 	IfLoggedIn bool
 	Errors     map[string]string
 }
@@ -53,7 +55,7 @@ func (msg *Message) Deliver() error {
 type Login struct {
 	Uname      string
 	Password   string
-	Role       int
+	Userrole   int8
 	IfLoggedIn bool
 	Errors     map[string]string
 }

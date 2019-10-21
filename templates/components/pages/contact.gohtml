@@ -20,10 +20,14 @@
                             <p class="error">{{ . }}</p>
                         {{ end }}
                         <label for="name" class="form-label">Name *</label>
-                        {{ if .Name }}
-                            <input type="text" name="name" id="name" placeholder="Letters and spaces" class="form-item" value="{{ .Name }}"/>
+                        {{ if .Fname }}
+                            <input type="text" name="name" id="name" placeholder="Letters and spaces" class="form-item" value="{{ .Fname }} {{ .Lname }}"/>
                         {{ else }}
-                            <input type="text" name="name" id="name" placeholder="Letters and spaces" class="form-item" value=""/>
+                            {{ if .Name }}
+                                <input type="text" name="name" id="name" placeholder="Letters and spaces" class="form-item" value="{{ .Name }}"/>
+                            {{ else }}
+                                <input type="text" name="name" id="name" placeholder="Letters and spaces" class="form-item" value=""/>
+                            {{ end }}
                         {{ end }}
                         {{ with .Errors.Email }}
                             <p class="error">{{ . }}</p>

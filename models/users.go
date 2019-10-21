@@ -135,6 +135,9 @@ func (userConnection UserConnection) CreateAdminUserIfNotExists() (entities.User
 
 // CreateUser is call in Register and creates a new user.
 func (userConnection UserConnection) CreateUser(us entities.User) (entities.User, error) {
+	password := []byte(us.Password)
+	hPass := hashAndSalt(password)
+
 	const (
 		execTvp = "spCreateAdminIfNotExists @UUID, @Fname, @Lname, @Uname, @Email, @Password, @Facebookid, @Userrole"
 	)
@@ -144,7 +147,7 @@ func (userConnection UserConnection) CreateUser(us entities.User) (entities.User
 		sql.Named("Lname", us.Lname),
 		sql.Named("Uname", us.Uname),
 		sql.Named("Email", us.Email),
-		sql.Named("Password", us.Password),
+		sql.Named("Password", hPass),
 		sql.Named("Facebookid", us.Facebookid),
 		sql.Named("Userrole", us.Userrole),
 	)

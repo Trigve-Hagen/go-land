@@ -49,12 +49,11 @@ func (userSession UserSession) SaveSearchStrings(us entities.Session) bool {
 // CreateSession creates arow in the database per user session.
 func (userSession UserSession) CreateSession(us entities.Session) (entities.Session, error) {
 	const (
-		execTvp = "spCreateUserSession @UUID, @UserUUID, @Created_at"
+		execTvp = "spCreateUserSession @UUID, @UserUUID"
 	)
 	_, err := userSession.Db.Exec(execTvp,
 		sql.Named("UUID", us.UUID),
 		sql.Named("UserUUID", us.UserUUID),
-		sql.Named("Created_at", us.DateTime),
 	)
 	if err != nil {
 		log.Fatal(err)

@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"html/template"
-	"log"
 	"net/http"
 	"time"
 
@@ -23,7 +22,7 @@ type userData struct {
 	Uname      string
 	Email      string
 	Password   string
-	Role       int
+	Userrole   int8
 }
 
 type sessionData struct {
@@ -33,7 +32,7 @@ type sessionData struct {
 }
 
 var tpl *template.Template
-var viewData map[string]userData
+var viewData = map[string]userData{}
 
 func init() {
 	tpl = template.Must(template.ParseGlob("templates/*/*/*.gohtml"))
@@ -65,29 +64,32 @@ func main() {
 }
 
 func index(res http.ResponseWriter, req *http.Request) {
-	ud := userData{}
-	if ifLoggedIn(req) == true {
-		ud.IfLoggedIn = true
-	}
+	ud := ifLoggedIn(req)
+	fmt.Println(ud)
 	render(res, "index.gohtml", ud)
 }
 
 func about(res http.ResponseWriter, req *http.Request) {
-	ud := userData{}
-	if ifLoggedIn(req) == true {
-		ud.IfLoggedIn = true
-	}
+	ud := ifLoggedIn(req)
 	render(res, "about.gohtml", ud)
 }
 
 func contact(res http.ResponseWriter, req *http.Request) {
+	ud := ifLoggedIn(req)
 	msg := &Message{
 		Name:       "",
 		Email:      "",
 		Subject:    "",
 		Message:    "",
-		IfLoggedIn: ifLoggedIn(req),
+		IfLoggedIn: false,
 	}
+	if ud.Fname != "" {
+		msg.Fname = ud.Fname
+		msg.Lname = ud.Lname
+		msg.Email = ud.Email
+		msg.IfLoggedIn = true
+	}
+
 	if req.Method == http.MethodPost {
 		msg.Name = req.FormValue("name")
 		msg.Email = req.FormValue("email")
@@ -109,10 +111,7 @@ func contact(res http.ResponseWriter, req *http.Request) {
 }
 
 func email(res http.ResponseWriter, req *http.Request) {
-	ud := userData{}
-	if ifLoggedIn(req) == true {
-		ud.IfLoggedIn = true
-	}
+	ud := ifLoggedIn(req)
 	render(res, "email.gohtml", ud)
 }
 
@@ -132,9 +131,8 @@ func logout(res http.ResponseWriter, req *http.Request) {
 
 func login(res http.ResponseWriter, req *http.Request) {
 	//ctx := context.Background()
-	ud := userData{}
-	if ifLoggedIn(req) == true {
-		ud.IfLoggedIn = true
+	ud := ifLoggedIn(req)
+	if ud.IfLoggedIn == true {
 		render(res, "admin.gohtml", ud)
 		return
 	}
@@ -191,11 +189,10 @@ func login(res http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		dt := time.Now().Format("2006-01-01 03:04:05")
+		//dt := time.Now().Format("2006-01-01 03:04:05")
 		usersess := entities.Session{
 			UUID:     uuidSess.String(),
 			UserUUID: user.UUID,
-			DateTime: dt,
 		}
 		userSession := users.UserSession{
 			Db: db,
@@ -208,6 +205,18 @@ func login(res http.ResponseWriter, req *http.Request) {
 			render(res, "login.gohtml", lgn)
 			return
 		}
+		fmt.Println(sess.UUID)
+		vwd := userData{
+			UUID:       user.UUID,
+			Fname:      user.Fname,
+			Lname:      user.Lname,
+			Uname:      user.Uname,
+			Email:      user.Email,
+			Password:   user.Password,
+			Userrole:   user.Userrole,
+			IfLoggedIn: true,
+		}
+		viewData[sess.UUID] = vwd
 		render(res, "admin.gohtml", user)
 		return
 	}
@@ -215,6 +224,7 @@ func login(res http.ResponseWriter, req *http.Request) {
 }
 
 func register(res http.ResponseWriter, req *http.Request) {
+	ud := ifLoggedIn(req)
 	vreg := &Register{
 		Fname:      "",
 		Lname:      "",
@@ -222,9 +232,15 @@ func register(res http.ResponseWriter, req *http.Request) {
 		Email:      "",
 		Password:   "",
 		RePassword: "",
-		IfLoggedIn: ifLoggedIn(req),
+		IfLoggedIn: false,
 	}
-	if vreg.IfLoggedIn == true {
+	if ud.Fname != "" {
+		vreg.Fname = ud.Fname
+		vreg.Lname = ud.Lname
+		vreg.Uname = ud.Uname
+		vreg.Email = ud.Email
+		vreg.IfLoggedIn = true
+		vreg.Userrole = ud.Userrole
 		render(res, "admin.gohtml", vreg)
 		return
 	}
@@ -243,8 +259,6 @@ func register(res http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		password := []byte(vreg.Password)
-		hPass := hashAndSalt(password)
 		uuidreg, err := uuid.NewUUID()
 		if err != nil {
 			vreg.Errors["Server"] = "Failed to create registration UUID."
@@ -277,7 +291,7 @@ func register(res http.ResponseWriter, req *http.Request) {
 			Lname:    vreg.Lname,
 			Uname:    vreg.Uname,
 			Email:    vreg.Email,
-			Password: hPass,
+			Password: vreg.Password,
 			Userrole: 2,
 		}
 		userConnection := users.UserConnection{
@@ -289,13 +303,12 @@ func register(res http.ResponseWriter, req *http.Request) {
 			render(res, "register.gohtml", vreg)
 			return
 		}
-		fmt.Println(user)
+		//fmt.Println(user)
 
-		dt := time.Now().Format("2006-01-01 03:04:05")
+		//dt := time.Now().Format("2006-01-01 03:04:05")
 		usersess := entities.Session{
 			UUID:     uuidSess.String(),
 			UserUUID: user.UUID,
-			DateTime: dt,
 		}
 		userSession := users.UserSession{
 			Db: db,
@@ -308,6 +321,17 @@ func register(res http.ResponseWriter, req *http.Request) {
 			render(res, "register.gohtml", vreg)
 			return
 		}
+		vwd := userData{
+			UUID:       uuidreg.String(),
+			Fname:      vreg.Fname,
+			Lname:      vreg.Lname,
+			Uname:      vreg.Uname,
+			Email:      vreg.Email,
+			Password:   vreg.Password,
+			Userrole:   2,
+			IfLoggedIn: true,
+		}
+		viewData[uuidSess.String()] = vwd
 		vreg.IfLoggedIn = true
 		render(res, "admin.gohtml", vreg)
 		return
@@ -316,9 +340,8 @@ func register(res http.ResponseWriter, req *http.Request) {
 }
 
 func admin(res http.ResponseWriter, req *http.Request) {
-	ud := userData{}
-	if ifLoggedIn(req) == true {
-		ud.IfLoggedIn = true
+	ud := ifLoggedIn(req)
+	if ud.IfLoggedIn == true {
 		render(res, "admin.gohtml", ud)
 		return
 	}
@@ -326,31 +349,23 @@ func admin(res http.ResponseWriter, req *http.Request) {
 }
 
 func forgotPassword(res http.ResponseWriter, req *http.Request) {
-	ud := userData{}
-	if ifLoggedIn(req) == true {
-		ud.IfLoggedIn = true
+	ud := ifLoggedIn(req)
+	if ud.IfLoggedIn == true {
 		render(res, "admin.gohtml", ud)
 		return
 	}
 	render(res, "forgot-password.gohtml", ud)
 }
 
-func hashAndSalt(pwd []byte) string {
-	hash, err := bcrypt.GenerateFromPassword(pwd, bcrypt.MinCost)
-	if err != nil {
-		log.Println(err)
-	}
-	return string(hash)
-}
-
-func ifLoggedIn(req *http.Request) bool {
+func ifLoggedIn(req *http.Request) userData {
 	c, err := req.Cookie("__ibes_")
 	_ = c
 
 	if err != nil {
-		return false
+		return userData{}
 	}
-	return true
+	ud := viewData[c.Value]
+	return ud
 }
 
 func render(res http.ResponseWriter, filename string, data interface{}) {
