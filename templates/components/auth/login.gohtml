@@ -15,8 +15,11 @@
                     <h3 class="page-title">
                         Login
                     </h3>
+                    {{ with .Errors.Success }}
+                        <p class="server-success">{{ . }}</p>
+                    {{ end }}
                     {{ with .Errors.Server }}
-                        <p class="error">{{ . }}</p>
+                        <p class="server-error">{{ . }}</p>
                     {{ end }}
                     <form action="/login" method="POST">
                         {{ with .Errors.Uname }}
@@ -43,6 +46,6 @@
             </div>
         </div>
         
-        {{template "footer"}}
+        {{template "footer" .}}
     </body>
 </html>

@@ -24,6 +24,24 @@ input:focus, textarea:focus {
     box-shadow: 1px 3px 6px #999;
 }
 
+p.server-success {
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #006600;
+    border-radius: 3px;
+    color: #006600;
+    opacity: .6;
+}
+
+p.server-error {
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #990000;
+    border-radius: 3px;
+    color: #990000;
+    opacity: .6;
+}
+
 p.error {
     display: inline-block;
     padding: 10px;

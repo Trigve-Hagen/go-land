@@ -15,8 +15,11 @@
                     <h3 class="page-title">
                         Register
                     </h3>
+                    {{ with .Errors.Success }}
+                        <p class="server-success">{{ . }}</p>
+                    {{ end }}
                     {{ with .Errors.Server }}
-                        <p class="error">{{ . }}</p>
+                        <p class="server-error">{{ . }}</p>
                     {{ end }}
                     <form action="/register" method="POST">
                         {{ with .Errors.Fname }}
@@ -80,6 +83,6 @@
             </div>
         </div>
         
-        {{template "footer"}}
+        {{template "footer" .}}
     </body>
 </html>

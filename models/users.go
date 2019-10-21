@@ -89,6 +89,12 @@ func (userConnection UserConnection) CheckLoginForm(uname string) (entities.User
 	return user, err
 }
 
+// CheckEmailForgotPassword checks for an email then sends an email to the submitted email to change password.
+func (userConnection UserConnection) CheckEmailForgotPassword(email string) bool {
+	fmt.Println(email)
+	return true
+}
+
 // CheckForUnique could check for uniqueness but the check is done in the database so im going to see what is returned.
 func (userConnection UserConnection) CheckForUnique(rowName string, rowValue string) bool {
 	fmt.Println(rowValue)

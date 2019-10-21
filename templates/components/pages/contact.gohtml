@@ -16,8 +16,11 @@
                         Contact Page
                     </h3>
                     <form action="/contact" method="POST">
-                        {{ with .Errors.Name }}
-                            <p class="error">{{ . }}</p>
+                        {{ with .Errors.Success }}
+                            <p class="server-success">{{ . }}</p>
+                        {{ end }}
+                        {{ with .Errors.Server }}
+                            <p class="server-error">{{ . }}</p>
                         {{ end }}
                         <label for="name" class="form-label">Name *</label>
                         {{ if .Fname }}
@@ -55,6 +58,6 @@
             </div>
         </div>
         
-        {{template "footer"}}
+        {{template "footer" .}}
     </body>
 </html>

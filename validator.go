@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-// Message is the structure used for the contact form.
+// Message is the structure used for the contact form validation.
 type Message struct {
 	Fname      string
 	Lname      string
@@ -51,7 +51,7 @@ func (msg *Message) Deliver() error {
 	return smtp.SendMail("smtp.gmail.com:587", auth, msg.Email, to, []byte(body))
 }
 
-// Login is the structure used for the contact form.
+// Login is the structure used for the contact form validation.
 type Login struct {
 	Uname      string
 	Password   string
@@ -76,7 +76,7 @@ func (lgn *Login) ValidateLogin() bool {
 	return len(lgn.Errors) == 0
 }
 
-// Register is the structure used for the contact form.
+// Register is the structure used for the contact form validation.
 type Register struct {
 	Fname      string
 	Lname      string
@@ -121,4 +121,50 @@ func (reg *Register) ValidateRegister() bool {
 		reg.Errors["RePassword"] = "Passwords do not match."
 	}
 	return len(reg.Errors) == 0
+}
+
+// ForgotPassword is the structure used for the forgot password form validation.
+type ForgotPassword struct {
+	Email      string
+	IfLoggedIn bool
+	Userrole   int8
+	Errors     map[string]string
+}
+
+// ValidateForgotPassword is used to validate the forgot password form.
+func (fp *ForgotPassword) ValidateForgotPassword() bool {
+	fp.Errors = make(map[string]string)
+
+	re := regexp.MustCompile(".+@.+\\..+")
+	m := re.Match([]byte(fp.Email))
+	if m == false {
+		fp.Errors["Email"] = "Please enter a valid email address."
+	}
+
+	return len(fp.Errors) == 0
+}
+
+// VNewsletter is the structure used for the newsletter form validation.
+type VNewsletter struct {
+	NEmail     string
+	Fname      string
+	Lname      string
+	Uname      string
+	Email      string
+	IfLoggedIn bool
+	Userrole   int8
+	Errors     map[string]string
+}
+
+// ValidateNewsletter is used to validate the newsletter form.
+func (new *VNewsletter) ValidateNewsletter() bool {
+	new.Errors = make(map[string]string)
+
+	re := regexp.MustCompile(".+@.+\\..+")
+	m := re.Match([]byte(new.NEmail))
+	if m == false {
+		new.Errors["Email"] = "Please enter a valid email address."
+	}
+
+	return len(new.Errors) == 0
 }

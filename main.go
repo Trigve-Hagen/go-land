@@ -8,6 +8,7 @@ import (
 
 	"github.com/Trigve-Hagen/rlayouts/config"
 	"github.com/Trigve-Hagen/rlayouts/entities"
+	newsletters "github.com/Trigve-Hagen/rlayouts/models"
 	users "github.com/Trigve-Hagen/rlayouts/models"
 	"golang.org/x/crypto/bcrypt"
 
@@ -65,8 +66,42 @@ func main() {
 
 func index(res http.ResponseWriter, req *http.Request) {
 	ud := ifLoggedIn(req)
-	fmt.Println(ud)
-	render(res, "index.gohtml", ud)
+	news := &VNewsletter{
+		NEmail:     "",
+		IfLoggedIn: false,
+	}
+	if ud.Fname != "" {
+		news.Fname = ud.Fname
+		news.Lname = ud.Lname
+		news.Email = ud.Email
+		news.Uname = ud.Uname
+		news.IfLoggedIn = true
+	}
+	if req.Method == http.MethodPost {
+		news.NEmail = req.FormValue("nemail")
+		if news.ValidateNewsletter() == false {
+			render(res, "index.gohtml", news)
+			return
+		}
+		db, err := config.GetMSSQLDB()
+		if err != nil {
+			news.IfLoggedIn = false
+			news.Errors["Server"] = "Could not connect to database."
+			render(res, "index.gohtml", news)
+			return
+		}
+		newsletterConnection := newsletters.NewsletterConnection{
+			Db: db,
+		}
+		if newsletterConnection.CreateNewsletter(news.NEmail) == false {
+			news.IfLoggedIn = false
+			news.Errors["Server"] = "Failed to create entry."
+			render(res, "index.gohtml", news)
+			return
+		}
+		news.Errors["Success"] = "Thank you for signing up. We appreciate your business."
+	}
+	render(res, "index.gohtml", news)
 }
 
 func about(res http.ResponseWriter, req *http.Request) {
@@ -354,7 +389,34 @@ func forgotPassword(res http.ResponseWriter, req *http.Request) {
 		render(res, "admin.gohtml", ud)
 		return
 	}
-	render(res, "forgot-password.gohtml", ud)
+	fp := &ForgotPassword{
+		Email:      "",
+		IfLoggedIn: false,
+	}
+	if req.Method == http.MethodPost {
+		fp.Email = req.FormValue("email")
+
+		if fp.ValidateForgotPassword() == false {
+			render(res, "forgot-password.gohtml", fp)
+			return
+		}
+		db, err := config.GetMSSQLDB()
+		if err != nil {
+			fp.Errors["Server"] = "Could not connect to database."
+			render(res, "forgot-password.gohtml", fp)
+			return
+		}
+		userConnection := users.UserConnection{
+			Db: db,
+		}
+		if userConnection.CheckEmailForgotPassword(fp.Email) == false {
+			fp.Errors["Success"] = "Please check for an email to reset you password."
+			render(res, "forgot-password.gohtml", fp)
+			return
+		}
+		fp.Errors["Success"] = "Please check for an email to reset you password."
+	}
+	render(res, "forgot-password.gohtml", fp)
 }
 
 func ifLoggedIn(req *http.Request) userData {
