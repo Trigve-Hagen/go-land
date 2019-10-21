@@ -22,8 +22,10 @@ type userData struct {
 	Lname      string
 	Uname      string
 	Email      string
+	NEmail     string
 	Password   string
 	Userrole   int8
+	Errors     map[string]string
 }
 
 type sessionData struct {
@@ -76,6 +78,7 @@ func index(res http.ResponseWriter, req *http.Request) {
 		news.Email = ud.Email
 		news.Uname = ud.Uname
 		news.IfLoggedIn = true
+		news.Userrole = ud.Userrole
 	}
 	if req.Method == http.MethodPost {
 		news.NEmail = req.FormValue("nemail")
@@ -160,6 +163,7 @@ func logout(res http.ResponseWriter, req *http.Request) {
 		HttpOnly: true,
 	})
 	ud := userData{}
+	ud.NEmail = ""
 	ud.IfLoggedIn = false
 	render(res, "index.gohtml", ud)
 }

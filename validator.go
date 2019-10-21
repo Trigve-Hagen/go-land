@@ -55,8 +55,8 @@ func (msg *Message) Deliver() error {
 type Login struct {
 	Uname      string
 	Password   string
-	Userrole   int8
 	IfLoggedIn bool
+	Userrole   int8
 	Errors     map[string]string
 }
 
