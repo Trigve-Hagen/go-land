@@ -15,7 +15,7 @@ type Message struct {
 	Email      string
 	Subject    string
 	Message    string
-	Userrole   int
+	Userrole   int8
 	IfLoggedIn bool
 	Errors     map[string]string
 }

@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"time"
 
+	_ "net/http/pprof"
+
 	"github.com/Trigve-Hagen/rlayouts/config"
 	"github.com/Trigve-Hagen/rlayouts/entities"
 	newsletters "github.com/Trigve-Hagen/rlayouts/models"
@@ -56,14 +58,84 @@ func main() {
 	http.HandleFunc("/", index)
 	http.HandleFunc("/about", about)
 	http.HandleFunc("/contact", contact)
-	http.HandleFunc("/email", email)
+	http.HandleFunc("/admin/email", email)
+	http.HandleFunc("/admin/go", goManager)
+	http.HandleFunc("/admin/sql", sqlManager)
+	http.HandleFunc("/admin/users", userManager)
+	http.HandleFunc("/admin/posts", postManager)
+	http.HandleFunc("/admin/comments", commentManager)
 	http.HandleFunc("/login", login)
 	http.HandleFunc("/logout", logout)
 	http.HandleFunc("/register", register)
 	http.HandleFunc("/forgot/password", forgotPassword)
 	http.HandleFunc("/auth/admin", admin)
+	http.HandleFunc("/auth/profile", profile)
+	http.HandleFunc("/auth/comments", comments)
 	http.Handle("/public/", http.StripPrefix("/public", http.FileServer(http.Dir("public"))))
 	http.ListenAndServe(":3000", nil)
+}
+
+func profile(res http.ResponseWriter, req *http.Request) {
+	ud := ifLoggedIn(req)
+	if ud.IfLoggedIn == true {
+		render(res, "profile.gohtml", ud)
+		return
+	}
+	render(res, "index.gohtml", ud)
+}
+
+func goManager(res http.ResponseWriter, req *http.Request) {
+	ud := ifLoggedIn(req)
+	if ud.IfLoggedIn == true {
+		render(res, "go-manager.gohtml", ud)
+		return
+	}
+	render(res, "index.gohtml", ud)
+}
+
+func sqlManager(res http.ResponseWriter, req *http.Request) {
+	ud := ifLoggedIn(req)
+	if ud.IfLoggedIn == true {
+		render(res, "sql-manager.gohtml", ud)
+		return
+	}
+	render(res, "index.gohtml", ud)
+}
+
+func userManager(res http.ResponseWriter, req *http.Request) {
+	ud := ifLoggedIn(req)
+	if ud.IfLoggedIn == true {
+		render(res, "user-manager.gohtml", ud)
+		return
+	}
+	render(res, "index.gohtml", ud)
+}
+
+func postManager(res http.ResponseWriter, req *http.Request) {
+	ud := ifLoggedIn(req)
+	if ud.IfLoggedIn == true {
+		render(res, "post-manager.gohtml", ud)
+		return
+	}
+	render(res, "index.gohtml", ud)
+}
+
+func commentManager(res http.ResponseWriter, req *http.Request) {
+	ud := ifLoggedIn(req)
+	if ud.IfLoggedIn == true {
+		render(res, "comment-manager.gohtml", ud)
+		return
+	}
+	render(res, "index.gohtml", ud)
+}
+
+func comments(res http.ResponseWriter, req *http.Request) {
+	ud := ifLoggedIn(req)
+	if ud.IfLoggedIn == true {
+		render(res, "comments.gohtml", ud)
+		return
+	}
+	render(res, "index.gohtml", ud)
 }
 
 func index(res http.ResponseWriter, req *http.Request) {
@@ -126,6 +198,7 @@ func contact(res http.ResponseWriter, req *http.Request) {
 		msg.Lname = ud.Lname
 		msg.Email = ud.Email
 		msg.IfLoggedIn = true
+		msg.Userrole = ud.Userrole
 	}
 
 	if req.Method == http.MethodPost {
@@ -150,7 +223,11 @@ func contact(res http.ResponseWriter, req *http.Request) {
 
 func email(res http.ResponseWriter, req *http.Request) {
 	ud := ifLoggedIn(req)
-	render(res, "email.gohtml", ud)
+	if ud.IfLoggedIn == true {
+		render(res, "email-manager.gohtml", ud)
+		return
+	}
+	render(res, "index.gohtml", ud)
 }
 
 func logout(res http.ResponseWriter, req *http.Request) {
@@ -380,6 +457,7 @@ func register(res http.ResponseWriter, req *http.Request) {
 
 func admin(res http.ResponseWriter, req *http.Request) {
 	ud := ifLoggedIn(req)
+	fmt.Println(ud)
 	if ud.IfLoggedIn == true {
 		render(res, "admin.gohtml", ud)
 		return

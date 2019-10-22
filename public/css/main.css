@@ -47,11 +47,18 @@ p {
         width: 100%;
         padding: 20px;
     }
+
+    .sidebar {
+        width: 100%;
+    }
+
+    .content {
+        width: 100%;
+    }
     
     .page-container {
         flex-grow: 1;
         align-items: center;
-        max-width: 960px;
         width: 100%;
         margin: 0 auto;
     }
@@ -99,14 +106,48 @@ p {
         margin: 0 auto;
         margin-top: 10px;
     }
+
+    .email-wrapper {
+        max-width: 702px;
+        margin:0 auto;
+    }
 }
 
 @media screen and (min-width: 1000px) {
-    .page-1200-container {
+    .page-container {
         flex-grow: 1;
         align-items: center;
-        max-width: 80%;
+        max-width: 960px;
         width: 100%;
         margin: 0 auto;
+    }
+
+    .page-1200-front-container {
+        flex-grow: 1;
+        align-items: center;
+        max-width: 1200px;
+        width: 100%;
+        margin: 0 auto;
+    }
+
+    .page-1200-container {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: stretch;
+        flex-grow: 1;
+        align-items: center;
+        max-width: 1200px;
+        width: 100%;
+        margin: 0 auto;
+    }
+
+    .sidebar {
+        flex-grow: 1;
+        max-width: 300px;
+    }
+
+    .content {
+        flex-grow: 2;
     }
 }

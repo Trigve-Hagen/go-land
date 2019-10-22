@@ -17,6 +17,7 @@
 
 @media screen and (min-width: 1000px) {
     .footer {
+        flex-direction: column;
         border-top: 1px solid #dddddd;
         padding: 50px;
     }

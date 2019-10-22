@@ -1,14 +1,6 @@
-<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head>
-    <meta http-equiv=Content-Type content="text/html; charset=utf-8"/>
-    <meta name="title" content="IBeAHero"/>
-    <meta name="description" content="IBeAHero"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-</head>
-<body style="font-family:Helvetica,Arial,sans-serif">
+{{define "email-body"}}
     <table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-bottom:50px;"><tr><td>
-        <table class="content" align="center" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:700px;box-shadow:1px 3px 6px #aaa;"><tr><td>
+        <table class="content" align="center" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:700px;"><tr><td>
             <table border="0" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;padding: 10px 20px 20px 20px;border:5px solid #3750a9;margin:50px auto;">
                 <tr>
                     <td>
@@ -22,19 +14,21 @@
                             </td></tr></table>
                         </td></tr></table>
                     </td>
-                </tr><tr>
-            <td>
-                <table border="0" cellpadding="0" cellspacing="0" style="width:100%;max-width:560px;"><tr><td>
-                    <table width="100%" border="0" cellspacing="0" cellpadding="0"><tr><td align="center">
-                        <div style="width:100%;padding:20;">
-                            <h3 style="text-align:center;margin-bottom:0px;">IBeAHero</h3>
-                            <p>IBeAHero</p>
-                            <p style="text-align:center;margin-top:0px;padding-top:0px;padding-bottom:20px;">IBeAHero</p>
-                        </div>
-                    </td></tr></table>
-                </td></tr></table>
-            </td>
-                </tr><tr>
+                </tr>
+                <tr>
+                    <td>
+                        <table border="0" cellpadding="0" cellspacing="0" style="width:100%;max-width:560px;"><tr><td>
+                            <table width="100%" border="0" cellspacing="0" cellpadding="0"><tr><td align="center">
+                                <div style="width:100%;padding:20;">
+                                    <h3 style="text-align:center;margin-bottom:0px;">IBeAHero</h3>
+                                    <p>IBeAHero</p>
+                                    <p style="text-align:center;margin-top:0px;padding-top:0px;padding-bottom:20px;">IBeAHero</p>
+                                </div>
+                            </td></tr></table>
+                        </td></tr></table>
+                    </td>
+                </tr>
+                <tr>
                     <td>
                         <table border="0" cellpadding="0" cellspacing="0" style="width:100%;max-width:560px;background-color:#efefef;"><tr><td>
                             <table width="100%" border="0" cellspacing="0" cellpadding="0"><tr><td align="center">
@@ -50,5 +44,5 @@
                 </tr>
             </table>
         </td></tr></table>
-    </body>
-</html>
+    </td></tr></table>
+{{end}}

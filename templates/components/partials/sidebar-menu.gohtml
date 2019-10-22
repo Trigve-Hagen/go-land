@@ -1,0 +1,18 @@
+{{define "sidebar-menu"}}
+    <div class="sidebar-menu">
+        <ul>
+            {{ if .Userrole }}
+                <li><a href="/auth/profile" class="menu-links">My Profile</a></li>
+                <li><a href="/auth/comments" class="menu-links">My Comments</a></li>
+                {{ if eq .Userrole 1 }}
+                    <li><a href="/admin/users" class="menu-links">Manage Users</a></li>
+                    <li><a href="/admin/posts" class="menu-links">Manage Posts</a></li>
+                    <li><a href="/admin/comments" class="menu-links">Manage Comments</a></li>
+                    <li><a href="/admin/go" class="menu-links">Manage Application</a></li>
+                    <li><a href="/admin/sql" class="menu-links">Manage Sql</a></li>
+                    <li><a href="/admin/email" class="menu-links">Manage Emails</a></li>
+                {{ end }}
+            {{ end }}
+        </ul>
+    </div>
+{{end}}

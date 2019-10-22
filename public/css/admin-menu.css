@@ -1,0 +1,19 @@
+@media screen {
+    .sidebar-menu {
+        display: none;
+    }
+}
+
+@media screen and (min-width: 1000px) {
+    .sidebar-menu {
+        display: block;
+    }
+
+    .sidebar-menu ul, .sidebar-menu li {
+        list-style: none;
+    }
+
+    .sidebar-menu ul li:not(:last-child) {
+        border-bottom: 1px solid #dddddd;
+    }
+}
