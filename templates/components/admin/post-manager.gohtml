@@ -18,8 +18,32 @@
                     <h1 class="page-title">
                         Posts Manager
                     </h1>
-                    <div class="email-wrapper">
-                        {{template "email-body"}}
+                    <a href="/posts/create" class="actions-links">Create Post</a>
+                    <div class="posts-wrapper">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th width="20%">ID</th>
+                                    <th width="60%">Title</th>
+                                    <th width="20%">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{ if .Posts }}
+                                    {{ range .Posts }}
+                                        <td>{{ .Id }}</td>
+                                        <td>{{ .Title }}</td>
+                                        <td>
+                                            <a href="/admin/view/post/{{ .Id }}" class="actions-links">View Post</a>
+                                            <a href="/admin/edit/post/{{ .Id }}" class="actions-links">Edit Post</a>
+                                            <a href="/admin/delete/post/{{ .Id }}" class="actions-links">Delete Post</a>
+                                        </td>
+                                    {{ end }}
+                                {{ else }}
+                                    <td colspan="3">There are no posts yet.</td>
+                                {{ end }}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>

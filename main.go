@@ -11,6 +11,7 @@ import (
 	"github.com/Trigve-Hagen/rlayouts/config"
 	"github.com/Trigve-Hagen/rlayouts/entities"
 	newsletters "github.com/Trigve-Hagen/rlayouts/models"
+	posts "github.com/Trigve-Hagen/rlayouts/models"
 	users "github.com/Trigve-Hagen/rlayouts/models"
 	"golang.org/x/crypto/bcrypt"
 
@@ -27,13 +28,14 @@ type userData struct {
 	NEmail     string
 	Password   string
 	Userrole   int8
+	Posts      []entities.Post
 	Errors     map[string]string
 }
 
 type sessionData struct {
-	UUID     string
-	UserUUID string
-	DateTime string
+	UUID      string
+	UserUUID  string
+	CreatedAt string
 }
 
 var tpl *template.Template
@@ -63,6 +65,7 @@ func main() {
 	http.HandleFunc("/admin/sql", sqlManager)
 	http.HandleFunc("/admin/users", userManager)
 	http.HandleFunc("/admin/posts", postManager)
+	http.HandleFunc("/posts/create", createPost)
 	http.HandleFunc("/admin/comments", commentManager)
 	http.HandleFunc("/login", login)
 	http.HandleFunc("/logout", logout)
@@ -73,6 +76,63 @@ func main() {
 	http.HandleFunc("/auth/comments", comments)
 	http.Handle("/public/", http.StripPrefix("/public", http.FileServer(http.Dir("public"))))
 	http.ListenAndServe(":3000", nil)
+}
+
+func postManager(res http.ResponseWriter, req *http.Request) {
+	ud := ifLoggedIn(req)
+	if ud.IfLoggedIn == true {
+		db, err := config.GetMSSQLDB()
+		if err != nil {
+			ud.IfLoggedIn = false
+			ud.Errors["Server"] = "Could not connect to database."
+			render(res, "post-manager.gohtml", ud)
+			return
+		}
+		postConnection := posts.PostConnection{
+			Db: db,
+		}
+		aposts, err := postConnection.GetPosts(1, 10)
+		if err != nil {
+			ud.IfLoggedIn = false
+			ud.Errors["Server"] = "Failed to create entry."
+			render(res, "index.gohtml", ud)
+			return
+		}
+
+		ud.Posts = aposts
+
+		render(res, "post-manager.gohtml", ud)
+		return
+	}
+	render(res, "index.gohtml", ud)
+}
+
+func createPost(res http.ResponseWriter, req *http.Request) {
+	ud := ifLoggedIn(req)
+	if ud.IfLoggedIn == true {
+		render(res, "create-post.gohtml", ud)
+		return
+	}
+
+	render(res, "index.gohtml", ud)
+}
+
+func commentManager(res http.ResponseWriter, req *http.Request) {
+	ud := ifLoggedIn(req)
+	if ud.IfLoggedIn == true {
+		render(res, "comment-manager.gohtml", ud)
+		return
+	}
+	render(res, "index.gohtml", ud)
+}
+
+func comments(res http.ResponseWriter, req *http.Request) {
+	ud := ifLoggedIn(req)
+	if ud.IfLoggedIn == true {
+		render(res, "comments.gohtml", ud)
+		return
+	}
+	render(res, "index.gohtml", ud)
 }
 
 func profile(res http.ResponseWriter, req *http.Request) {
@@ -106,33 +166,6 @@ func userManager(res http.ResponseWriter, req *http.Request) {
 	ud := ifLoggedIn(req)
 	if ud.IfLoggedIn == true {
 		render(res, "user-manager.gohtml", ud)
-		return
-	}
-	render(res, "index.gohtml", ud)
-}
-
-func postManager(res http.ResponseWriter, req *http.Request) {
-	ud := ifLoggedIn(req)
-	if ud.IfLoggedIn == true {
-		render(res, "post-manager.gohtml", ud)
-		return
-	}
-	render(res, "index.gohtml", ud)
-}
-
-func commentManager(res http.ResponseWriter, req *http.Request) {
-	ud := ifLoggedIn(req)
-	if ud.IfLoggedIn == true {
-		render(res, "comment-manager.gohtml", ud)
-		return
-	}
-	render(res, "index.gohtml", ud)
-}
-
-func comments(res http.ResponseWriter, req *http.Request) {
-	ud := ifLoggedIn(req)
-	if ud.IfLoggedIn == true {
-		render(res, "comments.gohtml", ud)
 		return
 	}
 	render(res, "index.gohtml", ud)

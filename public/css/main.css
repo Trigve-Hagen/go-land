@@ -111,6 +111,25 @@ p {
         max-width: 702px;
         margin:0 auto;
     }
+
+    table.table {
+        width: 100%;
+    }
+
+    table.table thead {
+        color: #ffffff;
+        background: #3750a9;
+        
+    }
+
+    table.table thead th {
+        padding: 10px;
+    }
+
+    a.actions-links {
+        padding: 10px;
+        margin-bottom: 5px
+    }
 }
 
 @media screen and (min-width: 1000px) {
@@ -149,5 +168,6 @@ p {
 
     .content {
         flex-grow: 2;
+        margin-left:20px;
     }
 }

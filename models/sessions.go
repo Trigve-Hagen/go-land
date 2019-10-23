@@ -29,9 +29,9 @@ func (userSession UserSession) GetSessionByUUID(uuid string) (entities.Session, 
 	err := result.Scan(&ID, &nuuid, &useruuid, &createdat)
 
 	sess := entities.Session{
-		UUID:     nuuid,
-		UserUUID: useruuid,
-		DateTime: createdat,
+		UUID:      nuuid,
+		UserUUID:  useruuid,
+		CreatedAt: createdat,
 	}
 	if err != nil {
 		fmt.Println(err)
