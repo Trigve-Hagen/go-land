@@ -18,6 +18,13 @@ import (
 	"github.com/google/uuid"
 )
 
+type message struct {
+	Name    string
+	Email   string
+	Subject string
+	Message string
+}
+
 type userData struct {
 	IfLoggedIn bool
 	UUID       string
@@ -27,7 +34,10 @@ type userData struct {
 	Email      string
 	NEmail     string
 	Password   string
+	RePassword string
 	Userrole   int8
+	Message    message
+	Post       entities.Post
 	Posts      []entities.Post
 	Errors     map[string]string
 }
@@ -40,6 +50,7 @@ type sessionData struct {
 
 var tpl *template.Template
 var viewData = map[string]userData{}
+var messageData = map[string]message{}
 
 func init() {
 	tpl = template.Must(template.ParseGlob("templates/*/*/*.gohtml"))
@@ -110,6 +121,15 @@ func postManager(res http.ResponseWriter, req *http.Request) {
 func createPost(res http.ResponseWriter, req *http.Request) {
 	ud := ifLoggedIn(req)
 	if ud.IfLoggedIn == true {
+		post := entities.Post{
+			Image:     "",
+			Title:     "",
+			Body:      "",
+			CreatedAt: "",
+		}
+		ud.Post = post
+		fmt.Println(ud)
+
 		render(res, "create-post.gohtml", ud)
 		return
 	}
@@ -173,43 +193,33 @@ func userManager(res http.ResponseWriter, req *http.Request) {
 
 func index(res http.ResponseWriter, req *http.Request) {
 	ud := ifLoggedIn(req)
-	news := &VNewsletter{
-		NEmail:     "",
-		IfLoggedIn: false,
-	}
-	if ud.Fname != "" {
-		news.Fname = ud.Fname
-		news.Lname = ud.Lname
-		news.Email = ud.Email
-		news.Uname = ud.Uname
-		news.IfLoggedIn = true
-		news.Userrole = ud.Userrole
-	}
+	ud.Errors = make(map[string]string)
 	if req.Method == http.MethodPost {
-		news.NEmail = req.FormValue("nemail")
+		ud.NEmail = req.FormValue("nemail")
+		news := &VNewsletter{
+			NEmail: ud.NEmail,
+		}
 		if news.ValidateNewsletter() == false {
-			render(res, "index.gohtml", news)
+			render(res, "index.gohtml", ud)
 			return
 		}
 		db, err := config.GetMSSQLDB()
 		if err != nil {
-			news.IfLoggedIn = false
 			news.Errors["Server"] = "Could not connect to database."
-			render(res, "index.gohtml", news)
+			render(res, "index.gohtml", ud)
 			return
 		}
 		newsletterConnection := newsletters.NewsletterConnection{
 			Db: db,
 		}
-		if newsletterConnection.CreateNewsletter(news.NEmail) == false {
-			news.IfLoggedIn = false
-			news.Errors["Server"] = "Failed to create entry."
-			render(res, "index.gohtml", news)
+		if newsletterConnection.CreateNewsletter(ud.NEmail) == false {
+			ud.Errors["Server"] = "Failed to create entry."
+			render(res, "index.gohtml", ud)
 			return
 		}
-		news.Errors["Success"] = "Thank you for signing up. We appreciate your business."
+		ud.Errors["Success"] = "Thank you for signing up. We appreciate your business."
 	}
-	render(res, "index.gohtml", news)
+	render(res, "index.gohtml", ud)
 }
 
 func about(res http.ResponseWriter, req *http.Request) {
@@ -219,39 +229,39 @@ func about(res http.ResponseWriter, req *http.Request) {
 
 func contact(res http.ResponseWriter, req *http.Request) {
 	ud := ifLoggedIn(req)
-	msg := &Message{
-		Name:       "",
-		Email:      "",
-		Subject:    "",
-		Message:    "",
-		IfLoggedIn: false,
+	ud.Message = message{
+		Name:    "",
+		Email:   "",
+		Subject: "",
+		Message: "",
 	}
-	if ud.Fname != "" {
-		msg.Fname = ud.Fname
-		msg.Lname = ud.Lname
-		msg.Email = ud.Email
-		msg.IfLoggedIn = true
-		msg.Userrole = ud.Userrole
-	}
-
+	ud.Errors = make(map[string]string)
 	if req.Method == http.MethodPost {
-		msg.Name = req.FormValue("name")
-		msg.Email = req.FormValue("email")
-		msg.Subject = req.FormValue("subject")
-		msg.Message = req.FormValue("message")
-
+		msg := &Message{
+			Name:    req.FormValue("name"),
+			Email:   req.FormValue("email"),
+			Subject: req.FormValue("subject"),
+			Message: req.FormValue("message"),
+		}
 		if msg.ValidateMessage() == false {
-			render(res, "contact.gohtml", msg)
+			ud.Errors = msg.Errors
+			ud.Message = message{
+				Name:    "",
+				Email:   "",
+				Subject: "",
+				Message: "",
+			}
+			render(res, "contact.gohtml", ud)
 			return
 		}
 		if err := msg.Deliver(); err != nil {
 			http.Error(res, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		render(res, "contact.gohtml", msg)
+		render(res, "contact.gohtml", ud)
 		return
 	}
-	render(res, "contact.gohtml", msg)
+	render(res, "contact.gohtml", ud)
 }
 
 func email(res http.ResponseWriter, req *http.Request) {
@@ -279,38 +289,49 @@ func logout(res http.ResponseWriter, req *http.Request) {
 }
 
 func login(res http.ResponseWriter, req *http.Request) {
-	//ctx := context.Background()
 	ud := ifLoggedIn(req)
+	ud.Errors = make(map[string]string)
 	if ud.IfLoggedIn == true {
 		render(res, "admin.gohtml", ud)
 		return
 	}
-	lgn := &Login{
-		Uname:    "",
-		Password: "",
-	}
 	if req.Method == http.MethodPost {
-		lgn.Uname = req.FormValue("uname")
-		lgn.Password = req.FormValue("password")
-
+		lgn := &Login{
+			Uname:    req.FormValue("uname"),
+			Password: req.FormValue("password"),
+		}
 		if lgn.ValidateLogin() == false {
-			lgn.IfLoggedIn = false
 			render(res, "login.gohtml", lgn)
 			return
 		}
+
+		ud.Uname = lgn.Uname
+		ud.Password = lgn.Password
 		db, err := config.GetMSSQLDB()
 		if err != nil {
-			lgn.IfLoggedIn = false
-			lgn.Errors["Server"] = "Could not connect to database."
-			render(res, "login.gohtml", lgn)
+			ud.Errors["Server"] = "Could not connect to database."
+			render(res, "login.gohtml", ud)
+			return
+		}
+		userConnection := users.UserConnection{
+			Db: db,
+		}
+		user, err := userConnection.CheckLoginForm(ud.Uname)
+		if err != nil {
+			ud.Errors["Server"] = "Failed to validate user."
+			render(res, "login.gohtml", ud)
+			return
+		}
+		if err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(ud.Password)); err != nil {
+			ud.Errors["Server"] = "Failed to validate user."
+			render(res, "login.gohtml", ud)
 			return
 		}
 
 		uuidSess, err := uuid.NewUUID()
 		if err != nil {
-			lgn.IfLoggedIn = false
-			lgn.Errors["Server"] = "Failed to create UUID."
-			render(res, "login.gohtml", lgn)
+			ud.Errors["Server"] = "Failed to create UUID."
+			render(res, "login.gohtml", ud)
 			return
 		}
 		http.SetCookie(res, &http.Cookie{
@@ -320,25 +341,6 @@ func login(res http.ResponseWriter, req *http.Request) {
 			Secure:   false,
 			HttpOnly: true,
 		})
-
-		userConnection := users.UserConnection{
-			Db: db,
-		}
-		user, err := userConnection.CheckLoginForm(lgn.Uname)
-		if err != nil {
-			lgn.IfLoggedIn = false
-			lgn.Errors["Server"] = "Failed to validate user."
-			render(res, "login.gohtml", lgn)
-			return
-		}
-		if err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(lgn.Password)); err != nil {
-			lgn.IfLoggedIn = false
-			lgn.Errors["Server"] = "Failed to validate user."
-			render(res, "login.gohtml", lgn)
-			return
-		}
-
-		//dt := time.Now().Format("2006-01-01 03:04:05")
 		usersess := entities.Session{
 			UUID:     uuidSess.String(),
 			UserUUID: user.UUID,
@@ -349,12 +351,10 @@ func login(res http.ResponseWriter, req *http.Request) {
 		sess, err := userSession.CreateSession(usersess)
 		_ = sess
 		if err != nil {
-			lgn.IfLoggedIn = false
-			lgn.Errors["Server"] = "Failed to create a session."
-			render(res, "login.gohtml", lgn)
+			ud.Errors["Server"] = "Failed to create a session."
+			render(res, "login.gohtml", ud)
 			return
 		}
-		fmt.Println(sess.UUID)
 		vwd := userData{
 			UUID:       user.UUID,
 			Fname:      user.Fname,
@@ -369,40 +369,26 @@ func login(res http.ResponseWriter, req *http.Request) {
 		render(res, "admin.gohtml", user)
 		return
 	}
-	render(res, "login.gohtml", lgn)
+	render(res, "login.gohtml", ud)
 }
 
 func register(res http.ResponseWriter, req *http.Request) {
 	ud := ifLoggedIn(req)
-	vreg := &Register{
-		Fname:      "",
-		Lname:      "",
-		Uname:      "",
-		Email:      "",
-		Password:   "",
-		RePassword: "",
-		IfLoggedIn: false,
-	}
-	if ud.Fname != "" {
-		vreg.Fname = ud.Fname
-		vreg.Lname = ud.Lname
-		vreg.Uname = ud.Uname
-		vreg.Email = ud.Email
-		vreg.IfLoggedIn = true
-		vreg.Userrole = ud.Userrole
-		render(res, "admin.gohtml", vreg)
+	ud.Errors = make(map[string]string)
+	if ud.IfLoggedIn == true {
+		render(res, "admin.gohtml", ud)
 		return
 	}
 
 	if req.Method == http.MethodPost {
-		vreg.Fname = req.FormValue("fname")
-		vreg.Lname = req.FormValue("lname")
-		vreg.Uname = req.FormValue("uname")
-		vreg.Email = req.FormValue("email")
-		vreg.Password = req.FormValue("password")
-		vreg.RePassword = req.FormValue("rePassword")
-		vreg.Userrole = 2
-
+		vreg := &Register{
+			Fname:      req.FormValue("fname"),
+			Lname:      req.FormValue("lname"),
+			Uname:      req.FormValue("uname"),
+			Email:      req.FormValue("email"),
+			Password:   req.FormValue("password"),
+			RePassword: req.FormValue("rePassword"),
+		}
 		if vreg.ValidateRegister() == false {
 			render(res, "register.gohtml", vreg)
 			return
@@ -410,30 +396,16 @@ func register(res http.ResponseWriter, req *http.Request) {
 
 		uuidreg, err := uuid.NewUUID()
 		if err != nil {
-			vreg.Errors["Server"] = "Failed to create registration UUID."
-			render(res, "register.gohtml", vreg)
+			ud.Errors["Server"] = "Failed to create registration UUID."
+			render(res, "register.gohtml", ud)
 			return
 		}
 		db, err := config.GetMSSQLDB()
 		if err != nil {
-			vreg.Errors["Server"] = "Could not connect to database."
-			render(res, "register.gohtml", vreg)
+			ud.Errors["Server"] = "Could not connect to database."
+			render(res, "register.gohtml", ud)
 			return
 		}
-		uuidSess, err := uuid.NewUUID()
-		if err != nil {
-			vreg.Errors["Server"] = "Failed to create session UUID."
-			render(res, "register.gohtml", vreg)
-			return
-		}
-		http.SetCookie(res, &http.Cookie{
-			Name:     "__ibes_",
-			Value:    uuidSess.String(),
-			Path:     "/",
-			Secure:   false,
-			HttpOnly: true,
-		})
-
 		user := entities.User{
 			UUID:     uuidreg.String(),
 			Fname:    vreg.Fname,
@@ -448,13 +420,24 @@ func register(res http.ResponseWriter, req *http.Request) {
 		}
 		user, err = userConnection.CreateUser(user)
 		if err != nil {
-			vreg.Errors["Server"] = "Failed to create user."
-			render(res, "register.gohtml", vreg)
+			ud.Errors["Server"] = "Failed to create user."
+			render(res, "register.gohtml", ud)
 			return
 		}
-		//fmt.Println(user)
 
-		//dt := time.Now().Format("2006-01-01 03:04:05")
+		uuidSess, err := uuid.NewUUID()
+		if err != nil {
+			ud.Errors["Server"] = "Failed to create session UUID."
+			render(res, "register.gohtml", ud)
+			return
+		}
+		http.SetCookie(res, &http.Cookie{
+			Name:     "__ibes_",
+			Value:    uuidSess.String(),
+			Path:     "/",
+			Secure:   false,
+			HttpOnly: true,
+		})
 		usersess := entities.Session{
 			UUID:     uuidSess.String(),
 			UserUUID: user.UUID,
@@ -465,9 +448,8 @@ func register(res http.ResponseWriter, req *http.Request) {
 		sess, err := userSession.CreateSession(usersess)
 		_ = sess
 		if err != nil {
-			vreg.IfLoggedIn = false
-			vreg.Errors["Server"] = "Failed to create a session."
-			render(res, "register.gohtml", vreg)
+			ud.Errors["Server"] = "Failed to create a session."
+			render(res, "register.gohtml", ud)
 			return
 		}
 		vwd := userData{
@@ -481,11 +463,11 @@ func register(res http.ResponseWriter, req *http.Request) {
 			IfLoggedIn: true,
 		}
 		viewData[uuidSess.String()] = vwd
-		vreg.IfLoggedIn = true
-		render(res, "admin.gohtml", vreg)
+		ud.IfLoggedIn = true
+		render(res, "admin.gohtml", vwd)
 		return
 	}
-	render(res, "register.gohtml", vreg)
+	render(res, "register.gohtml", ud)
 }
 
 func admin(res http.ResponseWriter, req *http.Request) {
@@ -500,40 +482,40 @@ func admin(res http.ResponseWriter, req *http.Request) {
 
 func forgotPassword(res http.ResponseWriter, req *http.Request) {
 	ud := ifLoggedIn(req)
+	ud.Errors = make(map[string]string)
 	if ud.IfLoggedIn == true {
 		render(res, "admin.gohtml", ud)
 		return
 	}
-	fp := &ForgotPassword{
-		Email:      "",
-		IfLoggedIn: false,
-	}
 	if req.Method == http.MethodPost {
-		fp.Email = req.FormValue("email")
-
+		fp := &ForgotPassword{
+			Email: req.FormValue("email"),
+		}
 		if fp.ValidateForgotPassword() == false {
 			render(res, "forgot-password.gohtml", fp)
 			return
 		}
+
 		db, err := config.GetMSSQLDB()
 		if err != nil {
-			fp.Errors["Server"] = "Could not connect to database."
-			render(res, "forgot-password.gohtml", fp)
+			ud.Errors["Server"] = "Could not connect to database."
+			render(res, "forgot-password.gohtml", ud)
 			return
 		}
 		userConnection := users.UserConnection{
 			Db: db,
 		}
 		if userConnection.CheckEmailForgotPassword(fp.Email) == false {
-			fp.Errors["Success"] = "Please check for an email to reset you password."
-			render(res, "forgot-password.gohtml", fp)
+			ud.Errors["Success"] = "Please check for an email to reset you password."
+			render(res, "forgot-password.gohtml", ud)
 			return
 		}
-		fp.Errors["Success"] = "Please check for an email to reset you password."
+		ud.Errors["Success"] = "Please check for an email to reset you password."
 	}
-	render(res, "forgot-password.gohtml", fp)
+	render(res, "forgot-password.gohtml", ud)
 }
 
+// doubles as ifLoggedIn and return userData object to be loaded with data from posts and comments
 func ifLoggedIn(req *http.Request) userData {
 	c, err := req.Cookie("__ibes_")
 	_ = c

@@ -20,7 +20,37 @@
                         Create Post
                     </h1>
                     <div class="posts-wrapper">
-                        {{template "email-body"}}
+                        <form action="/posts/create" method="POST">
+                            {{ with .Errors.Success }}
+                                <p class="server-success">{{ . }}</p>
+                            {{ end }}
+                            {{ with .Errors.Server }}
+                                <p class="server-error">{{ . }}</p>
+                            {{ end }}
+                            {{ with .Errors.Post.Title }}
+                                <p class="error">{{ . }}</p>
+                            {{ end }}
+                            <label for="title" class="form-label">Title *</label>
+                            {{ if .Post.Title }}
+                                <input type="text" name="title" id="title" placeholder="Letters and spaces" class="form-item" value="{{ .Post.Title }}"/>
+                            {{ else }}
+                                <input type="text" name="title" id="title" placeholder="Letters and spaces" class="form-item" value=""/>
+                            {{ end }}
+                            
+                            {{ with .Errors.Post.Body }}
+                                <p class="error">{{ . }}</p>
+                            {{ end }}
+                            <label for="body" class="form-label">Body *</label>
+                            {{ if .Post.Body }}
+                                <textarea name="body" col="4" id="body">{{ .Post.Body }}</textarea>
+                            {{ else }}
+                                <textarea name="body" col="4" id="body"></textarea>
+                            {{ end }}
+                            <script>
+                                CKEDITOR.replace( 'body' );
+                            </script>
+                            <input type="submit" name="submit-contact" id="edit-submit" value="Create Post"/>
+                        </form>
                     </div>
                 </div>
             </div>

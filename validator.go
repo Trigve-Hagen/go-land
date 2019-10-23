@@ -9,15 +9,11 @@ import (
 
 // Message is the structure used for the contact form validation.
 type Message struct {
-	Fname      string
-	Lname      string
-	Name       string
-	Email      string
-	Subject    string
-	Message    string
-	Userrole   int8
-	IfLoggedIn bool
-	Errors     map[string]string
+	Name    string
+	Email   string
+	Subject string
+	Message string
+	Errors  map[string]string
 }
 
 // ValidateMessage is used to validate the contact form.
@@ -53,11 +49,9 @@ func (msg *Message) Deliver() error {
 
 // Login is the structure used for the contact form validation.
 type Login struct {
-	Uname      string
-	Password   string
-	IfLoggedIn bool
-	Userrole   int8
-	Errors     map[string]string
+	Uname    string
+	Password string
+	Errors   map[string]string
 }
 
 // ValidateLogin is used to validate the login form.
@@ -84,8 +78,6 @@ type Register struct {
 	Email      string
 	Password   string
 	RePassword string
-	IfLoggedIn bool
-	Userrole   int8
 	Errors     map[string]string
 }
 
@@ -125,10 +117,8 @@ func (reg *Register) ValidateRegister() bool {
 
 // ForgotPassword is the structure used for the forgot password form validation.
 type ForgotPassword struct {
-	Email      string
-	IfLoggedIn bool
-	Userrole   int8
-	Errors     map[string]string
+	Email  string
+	Errors map[string]string
 }
 
 // ValidateForgotPassword is used to validate the forgot password form.
@@ -146,14 +136,8 @@ func (fp *ForgotPassword) ValidateForgotPassword() bool {
 
 // VNewsletter is the structure used for the newsletter form validation.
 type VNewsletter struct {
-	NEmail     string
-	Fname      string
-	Lname      string
-	Uname      string
-	Email      string
-	IfLoggedIn bool
-	Userrole   int8
-	Errors     map[string]string
+	NEmail string
+	Errors map[string]string
 }
 
 // ValidateNewsletter is used to validate the newsletter form.

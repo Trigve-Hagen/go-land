@@ -22,12 +22,15 @@
                         {{ with .Errors.Server }}
                             <p class="server-error">{{ . }}</p>
                         {{ end }}
+                        {{ with .Errors.Name }}
+                            <p class="error">{{ . }}</p>
+                        {{ end }}
                         <label for="name" class="form-label">Name *</label>
                         {{ if .Fname }}
                             <input type="text" name="name" id="name" placeholder="Letters and spaces" class="form-item" value="{{ .Fname }} {{ .Lname }}"/>
                         {{ else }}
-                            {{ if .Name }}
-                                <input type="text" name="name" id="name" placeholder="Letters and spaces" class="form-item" value="{{ .Name }}"/>
+                            {{ if .Message.Name }}
+                                <input type="text" name="name" id="name" placeholder="Letters and spaces" class="form-item" value="{{ .Message.Name }}"/>
                             {{ else }}
                                 <input type="text" name="name" id="name" placeholder="Letters and spaces" class="form-item" value=""/>
                             {{ end }}
@@ -37,9 +40,13 @@
                         {{ end }}
                         <label for="email" class="form-label">Email *</label>
                         {{ if .Email }}
-                            <input type="email" name="email" id="email" placeholder="something@somewhere.com" class="form-item" value="{{ .Email }}"/>
+                            <input type="email" name="email" id="email" placeholder="someone@somewhere.com" class="form-item" value="{{ .Email }}"/>
                         {{ else }}
-                            <input type="email" name="email" id="email" placeholder="something@somewhere.com" class="form-item" value=""/>
+                            {{ if .Message.Email }}
+                                <input type="email" name="email" id="email" placeholder="someone@somewhere.com" class="form-item" value="{{ .Message.Email }}"/>
+                            {{ else }}
+                                <input type="email" name="email" id="email" placeholder="someone@somewhere.com" class="form-item" value=""/>
+                            {{ end }}
                         {{ end }}
                         <label for="subject" class="form-label">Subject</label>
                         <input type="text" name="subject" id="subject" placeholder="Letters and spaces" class="form-item" value=""/>
@@ -47,8 +54,8 @@
                             <p class="error">{{ . }}</p>
                         {{ end }}
                         <label for="message" class="form-label">Message *</label>
-                        {{ if .Message }}
-                            <textarea name="message" col="4" id="message">{{ .Message }}</textarea>
+                        {{ if .Message.Message }}
+                            <textarea name="message" col="4" id="message">{{ .Message.Message }}</textarea>
                         {{ else }}
                             <textarea name="message" col="4" id="message"></textarea>
                         {{ end }}

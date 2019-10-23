@@ -13,5 +13,4 @@ type User struct {
 	status     int8
 	Facebookid int
 	IfLoggedIn bool
-	Errors     map[string]string
 }
