@@ -81,6 +81,10 @@ select {
     padding: 1rem;
 }
 
+#imgfile {
+    margin-bottom: 15px;
+}
+
 .form-required:after {
     content: '*';
     font-size: 1em;

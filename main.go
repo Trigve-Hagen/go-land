@@ -1,9 +1,14 @@
 package main
 
 import (
+	"crypto/sha1"
 	"fmt"
 	"html/template"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	_ "net/http/pprof"
@@ -128,8 +133,46 @@ func createPost(res http.ResponseWriter, req *http.Request) {
 			CreatedAt: "",
 		}
 		ud.Post = post
-		fmt.Println(ud)
+		if req.Method == http.MethodPost {
+			mf, fh, err := req.FormFile("imgfile")
+			if err != nil {
+				fmt.Println("Here 1")
+				render(res, "create-post.gohtml", ud)
+				return
+			}
+			defer mf.Close()
 
+			ext := strings.Split(fh.Filename, ".")[1]
+			h := sha1.New()
+			io.Copy(h, mf)
+			fname := fmt.Sprintf("%x", h.Sum(nil)) + "." + ext
+
+			wd, err := os.Getwd()
+			if err != nil {
+				fmt.Println("Here 2 ", fname)
+				render(res, "create-post.gohtml", ud)
+				return
+			}
+
+			newpath := filepath.Join(wd, "public", "images", "uploads")
+			if _, err := os.Stat(newpath); os.IsNotExist(err) {
+				os.MkdirAll(newpath, os.ModePerm)
+			}
+
+			path := filepath.Join(wd, "public", "images", "uploads", fname)
+			nf, err := os.Create(path)
+			if err != nil {
+				fmt.Println("Here 3 ", fname)
+				render(res, "create-post.gohtml", ud)
+				return
+			}
+			defer nf.Close()
+
+			mf.Seek(0, 0)
+			io.Copy(nf, mf)
+
+			fmt.Println(fname)
+		}
 		render(res, "create-post.gohtml", ud)
 		return
 	}
