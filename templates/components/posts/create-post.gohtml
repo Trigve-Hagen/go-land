@@ -5,7 +5,7 @@
         <title>Posts Manager</title>
         <meta name='description' content='Manages the post content.'>
         {{template "head-section"}}
-        <script src="https://cdn.ckeditor.com/4.13.0/standard/ckeditor.js"></script>
+        <script src="https://cdn.ckeditor.com/ckeditor5/12.4.0/classic/ckeditor.js"></script>
     </head>
     <body>
         {{template "upper-header" .}}
@@ -49,10 +49,17 @@
                             {{ if .Post.Body }}
                                 <textarea name="body" col="4" id="body">{{ .Post.Body }}</textarea>
                             {{ else }}
-                                <textarea name="body" col="4" id="body"></textarea>
+                                <textarea name="body" col="6" id="body"></textarea>
                             {{ end }}
                             <script>
-                                CKEDITOR.replace( 'body' );
+                                    ClassicEditor
+                                            .create( document.querySelector( '#editor' ) )
+                                            .then( editor => {
+                                                    console.log( editor );
+                                            } )
+                                            .catch( error => {
+                                                    console.error( error );
+                                            } );
                             </script>
                             <input type="submit" name="submit-contact" id="edit-submit" value="Create Post"/>
                         </form>

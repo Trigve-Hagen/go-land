@@ -96,10 +96,10 @@ func main() {
 
 func postManager(res http.ResponseWriter, req *http.Request) {
 	ud := ifLoggedIn(req)
+	ud.Errors = make(map[string]string)
 	if ud.IfLoggedIn == true {
 		db, err := config.GetMSSQLDB()
 		if err != nil {
-			ud.IfLoggedIn = false
 			ud.Errors["Server"] = "Could not connect to database."
 			render(res, "post-manager.gohtml", ud)
 			return
@@ -109,9 +109,8 @@ func postManager(res http.ResponseWriter, req *http.Request) {
 		}
 		aposts, err := postConnection.GetPosts(1, 10)
 		if err != nil {
-			ud.IfLoggedIn = false
-			ud.Errors["Server"] = "Failed to create entry."
-			render(res, "index.gohtml", ud)
+			ud.Errors["Server"] = "Failed to retreive posts."
+			render(res, "post-manager.gohtml", ud)
 			return
 		}
 
@@ -125,6 +124,7 @@ func postManager(res http.ResponseWriter, req *http.Request) {
 
 func createPost(res http.ResponseWriter, req *http.Request) {
 	ud := ifLoggedIn(req)
+	ud.Errors = make(map[string]string)
 	if ud.IfLoggedIn == true {
 		post := entities.Post{
 			Image:     "",
@@ -171,7 +171,41 @@ func createPost(res http.ResponseWriter, req *http.Request) {
 			mf.Seek(0, 0)
 			io.Copy(nf, mf)
 
-			fmt.Println(fname)
+			vpost := &VPosts{
+				Title: req.FormValue("title"),
+				Body:  req.FormValue("body"),
+			}
+			if vpost.ValidatePost() == false {
+				render(res, "create-post.gohtml", ud)
+				return
+			}
+
+			apost := entities.Post{
+				UserUUID: ud.UUID,
+				Image:    fname,
+				Title:    vpost.Title,
+				Body:     vpost.Body,
+			}
+
+			db, err := config.GetMSSQLDB()
+			if err != nil {
+				ud.Errors["Server"] = "Could not connect to database."
+				render(res, "create-post.gohtml", ud)
+				return
+			}
+			postConnection := posts.PostConnection{
+				Db: db,
+			}
+			if postConnection.CreatePost(apost) == false {
+				ud.Errors["Server"] = "Failed to create entry."
+				render(res, "create-post.gohtml", ud)
+				return
+			}
+
+			ud.Post = apost
+
+			render(res, "create-post.gohtml", ud)
+			return
 		}
 		render(res, "create-post.gohtml", ud)
 		return

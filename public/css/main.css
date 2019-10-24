@@ -126,6 +126,10 @@ p {
         padding: 10px;
     }
 
+    table.table tbody tr {
+        border-bottom: 1px solid #dddddd;
+    }
+
     a.actions-links {
         padding: 10px;
         margin-bottom: 5px

@@ -18,6 +18,9 @@
                     <h1 class="page-title">
                         Posts Manager
                     </h1>
+                    {{ with .Errors.Server }}
+                        <p class="server-error">{{ . }}</p>
+                    {{ end }}
                     <a href="/posts/create" class="actions-links">Create Post</a>
                     <div class="posts-wrapper">
                         <table class="table">
@@ -31,16 +34,20 @@
                             <tbody>
                                 {{ if .Posts }}
                                     {{ range .Posts }}
-                                        <td>{{ .Id }}</td>
-                                        <td>{{ .Title }}</td>
-                                        <td>
-                                            <a href="/admin/view/post/{{ .Id }}" class="actions-links">View Post</a>
-                                            <a href="/admin/edit/post/{{ .Id }}" class="actions-links">Edit Post</a>
-                                            <a href="/admin/delete/post/{{ .Id }}" class="actions-links">Delete Post</a>
-                                        </td>
+                                        <tr>
+                                            <td>{{ .ID }}</td>
+                                            <td>{{ .Title }}</td>
+                                            <td>
+                                                <a href="/admin/view/post/{{ .ID }}" class="actions-links">View Post</a><br />
+                                                <a href="/admin/edit/post/{{ .ID }}" class="actions-links">Edit Post</a><br />
+                                                <a href="/admin/delete/post/{{ .ID }}" class="actions-links">Delete Post</a>
+                                            </td>
+                                        </tr>
                                     {{ end }}
                                 {{ else }}
-                                    <td colspan="3">There are no posts yet.</td>
+                                    <tr>
+                                        <td colspan="3">There are no posts yet.</td>
+                                    </tr>
                                 {{ end }}
                             </tbody>
                         </table>

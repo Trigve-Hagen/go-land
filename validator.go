@@ -152,3 +152,32 @@ func (new *VNewsletter) ValidateNewsletter() bool {
 
 	return len(new.Errors) == 0
 }
+
+// VPosts is the structure used for the post form validation.
+type VPosts struct {
+	Title  string
+	Body   string
+	Errors map[string]string
+}
+
+// ValidatePost is used to validate the post form.
+func (new *VPosts) ValidatePost() bool {
+	new.Errors = make(map[string]string)
+
+	new.Title = strings.Replace(new.Title, "'", "", -1)
+	new.Title = strings.Replace(new.Title, ",", "", -1)
+	usn := regexp.MustCompile("[0-9A-Za-z\\s\\.\\-\\?!]+")
+	matched := usn.Match([]byte(new.Title))
+	if matched == false {
+		new.Errors["Title"] = "Please enter a valid post Title."
+	}
+
+	new.Body = strings.Replace(new.Body, "'", "", -1)
+	new.Body = strings.Replace(new.Body, ",", "", -1)
+	match := usn.Match([]byte(new.Body))
+	if match == false {
+		new.Errors["Body"] = "Please enter a valid post body."
+	}
+
+	return len(new.Errors) == 0
+}

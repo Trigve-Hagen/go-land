@@ -7,6 +7,6 @@ type Post struct {
 	Image     string
 	Title     string
 	Body      string
-	Status    string
+	Status    int
 	CreatedAt string
 }

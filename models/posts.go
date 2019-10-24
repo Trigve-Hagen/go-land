@@ -123,9 +123,10 @@ func (postConnection PostConnection) GetPosts(cp int, pp int) ([]entities.Post, 
 		var image string
 		var title string
 		var body string
+		var status int
 		var createdat string
 
-		err := rows.Scan(&id, &userid, &image, &title, &body, &createdat)
+		err := rows.Scan(&id, &userid, &image, &title, &body, &status, &createdat)
 		if err != nil {
 			return nil, err
 		}
@@ -135,6 +136,7 @@ func (postConnection PostConnection) GetPosts(cp int, pp int) ([]entities.Post, 
 			Image:     image,
 			Title:     title,
 			Body:      body,
+			Status:    status,
 			CreatedAt: createdat,
 		}
 		posts = append(posts, post)
