@@ -36,6 +36,7 @@ func (userConnection UserConnection) GetUserByID(uuid string) (entities.User, er
 	err := result.Scan(&ID, &nuuid, &fname, &lname, &nuname, &email, &password, &facebookid, &userrole)
 
 	user := entities.User{
+		ID:         ID,
 		UUID:       uuid,
 		Fname:      fname,
 		Lname:      lname,
@@ -73,6 +74,7 @@ func (userConnection UserConnection) CheckLoginForm(uname string) (entities.User
 	err := result.Scan(&ID, &uuid, &fname, &lname, &nuname, &email, &password, &facebookid, &userrole)
 
 	user := entities.User{
+		ID:         ID,
 		UUID:       uuid,
 		Fname:      fname,
 		Lname:      lname,

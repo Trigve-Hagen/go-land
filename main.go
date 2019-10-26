@@ -32,6 +32,7 @@ type message struct {
 
 type userData struct {
 	IfLoggedIn bool
+	ID         string
 	UUID       string
 	Fname      string
 	Lname      string
@@ -82,6 +83,7 @@ func main() {
 	http.HandleFunc("/admin/users", userManager)
 	http.HandleFunc("/admin/posts", postManager)
 	http.HandleFunc("/posts/create", createPost)
+	http.HandleFunc("/posts/handle", handlePost)
 	http.HandleFunc("/admin/comments", commentManager)
 	http.HandleFunc("/login", login)
 	http.HandleFunc("/logout", logout)
@@ -122,6 +124,28 @@ func postManager(res http.ResponseWriter, req *http.Request) {
 	render(res, "index.gohtml", ud)
 }
 
+func handlePost(res http.ResponseWriter, req *http.Request) {
+	ud := ifLoggedIn(req)
+	if ud.IfLoggedIn == true {
+		if req.Method == http.MethodPost {
+			method := req.FormValue("method")
+			switch method {
+			case "DELETE":
+				fmt.Println("Delete ", req.FormValue("ID"))
+			case "UPDATE":
+				fmt.Println("Update ", req.FormValue("ID"))
+			case "VIEW":
+				fmt.Println("Veiw ", req.FormValue("ID"))
+			}
+		}
+		fmt.Println(req.URL)
+		http.Redirect(res, req, "/admin/posts", http.StatusMovedPermanently)
+		render(res, "post-manager.gohtml", ud)
+		return
+	}
+	render(res, "index.gohtml", ud)
+}
+
 func createPost(res http.ResponseWriter, req *http.Request) {
 	ud := ifLoggedIn(req)
 	ud.Errors = make(map[string]string)
@@ -154,12 +178,12 @@ func createPost(res http.ResponseWriter, req *http.Request) {
 				return
 			}
 
-			newpath := filepath.Join(wd, "public", "images", "uploads")
+			newpath := filepath.Join(wd, "public", "images", "uploads", ud.ID)
 			if _, err := os.Stat(newpath); os.IsNotExist(err) {
 				os.MkdirAll(newpath, os.ModePerm)
 			}
 
-			path := filepath.Join(wd, "public", "images", "uploads", fname)
+			path := filepath.Join(wd, "public", "images", "uploads", ud.ID, fname)
 			nf, err := os.Create(path)
 			if err != nil {
 				fmt.Println("Here 3 ", fname)

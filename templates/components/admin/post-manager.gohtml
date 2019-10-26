@@ -21,7 +21,9 @@
                     {{ with .Errors.Server }}
                         <p class="server-error">{{ . }}</p>
                     {{ end }}
-                    <a href="/posts/create" class="actions-links">Create Post</a>
+                    <form action="/posts/create" class="post-form" method="POST">
+                        <input type="submit" name="view-submit" class="post-buttons" value="Create Post"/>
+                    </form>
                     <div class="posts-wrapper">
                         <table class="table">
                             <thead>
@@ -38,9 +40,21 @@
                                             <td>{{ .ID }}</td>
                                             <td>{{ .Title }}</td>
                                             <td>
-                                                <a href="/admin/view/post/{{ .ID }}" class="actions-links">View Post</a><br />
-                                                <a href="/admin/edit/post/{{ .ID }}" class="actions-links">Edit Post</a><br />
-                                                <a href="/admin/delete/post/{{ .ID }}" class="actions-links">Delete Post</a>
+                                                <form action="/posts/handle" class="post-form" method="POST">
+                                                    <input type="hidden" name="method" value="VIEW"/>
+                                                    <input type="hidden" name="ID" value="{{ .ID }}"/>
+                                                    <input type="submit" name="view-submit" class="post-buttons" value="View"/>
+                                                </form>
+                                                <form action="/posts/handle" class="post-form" method="POST">
+                                                    <input type="hidden" name="method" value="UPDATE"/>
+                                                    <input type="hidden" name="ID" value="{{ .ID }}"/>
+                                                    <input type="submit" name="view-submit" class="post-buttons" value="Edit"/>
+                                                </form>
+                                                <form action="/posts/handle" class="post-form" method="POST">
+                                                    <input type="hidden" name="method" value="DELETE"/>
+                                                    <input type="hidden" name="ID" value="{{ .ID }}"/>
+                                                    <input type="submit" name="view-submit" class="post-buttons" value="Delete"/>
+                                                </form>
                                             </td>
                                         </tr>
                                     {{ end }}
