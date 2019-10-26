@@ -15,36 +15,87 @@ type UserConnection struct {
 	Db *sql.DB
 }
 
-// GetUserByID gets the row in Users table associated with the given UUID.
-func (userConnection UserConnection) GetUserByID(uuid string) (entities.User, error) {
+// GetUsers gets a list of users from the database.
+func (userConnection UserConnection) GetUsers(cp int, pp int) ([]entities.User, error) {
 	const (
-		execTvp = "spGetUserByUUID @UUID"
+		execTvp = "spGetUsers @CurrentPage, @PerPage"
+	)
+	rows, err := userConnection.Db.Query(execTvp,
+		sql.Named("CurrentPage", cp),
+		sql.Named("PerPage", pp),
+	)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	users := []entities.User{}
+	for rows.Next() {
+		var id int
+		var uuid string
+		var fname string
+		var lname string
+		var uname string
+		var email string
+		var password string
+		var facebookid int
+		var userrole int8
+		var status int8
+
+		err := rows.Scan(&id, &uuid, &fname, &lname, &uname, &email, &password, &facebookid, &userrole, &status)
+		if err != nil {
+			fmt.Println(err)
+			return nil, err
+		}
+		user := entities.User{
+			ID:         id,
+			UUID:       uuid,
+			Fname:      fname,
+			Lname:      lname,
+			Uname:      uname,
+			Email:      email,
+			Password:   password,
+			Facebookid: facebookid,
+			Userrole:   userrole,
+			Status:     status,
+		}
+		users = append(users, user)
+	}
+
+	return users, nil
+}
+
+// GetUserByID gets the row in Users table associated with the given UUID.
+func (userConnection UserConnection) GetUserByID(id string) (entities.User, error) {
+	const (
+		execTvp = "spGetUserByID @ID"
 	)
 	result := userConnection.Db.QueryRow(execTvp,
-		sql.Named("UUID", uuid),
+		sql.Named("ID", id),
 	)
-	var ID int
-	var nuuid string
+	var nid int
+	var uuid string
 	var fname string
 	var lname string
-	var nuname string
+	var uname string
 	var email string
 	var password string
 	var facebookid int
 	var userrole int8
+	var status int8
 
-	err := result.Scan(&ID, &nuuid, &fname, &lname, &nuname, &email, &password, &facebookid, &userrole)
+	err := result.Scan(&nid, &uuid, &fname, &lname, &uname, &email, &password, &facebookid, &userrole, &status)
 
 	user := entities.User{
-		ID:         ID,
-		UUID:       uuid,
-		Fname:      fname,
-		Lname:      lname,
-		Uname:      nuname,
-		Email:      email,
-		Password:   password,
-		Userrole:   userrole,
-		IfLoggedIn: true,
+		ID:       nid,
+		UUID:     uuid,
+		Fname:    fname,
+		Lname:    lname,
+		Uname:    uname,
+		Email:    email,
+		Password: password,
+		Userrole: userrole,
+		Status:   status,
 	}
 	if err != nil {
 		fmt.Println(err)
@@ -70,8 +121,9 @@ func (userConnection UserConnection) CheckLoginForm(uname string) (entities.User
 	var password string
 	var facebookid int
 	var userrole int8
+	var status int8
 
-	err := result.Scan(&ID, &uuid, &fname, &lname, &nuname, &email, &password, &facebookid, &userrole)
+	err := result.Scan(&ID, &uuid, &fname, &lname, &nuname, &email, &password, &facebookid, &userrole, &status)
 
 	user := entities.User{
 		ID:         ID,
@@ -81,14 +133,30 @@ func (userConnection UserConnection) CheckLoginForm(uname string) (entities.User
 		Uname:      nuname,
 		Email:      email,
 		Password:   password,
+		Facebookid: facebookid,
 		Userrole:   userrole,
-		IfLoggedIn: true,
+		Status:     status,
 	}
 	if err != nil {
 		fmt.Println(err)
 		return user, err
 	}
 	return user, err
+}
+
+// DeleteUser deletes a row in the user database.
+func (userConnection UserConnection) DeleteUser(id string) bool {
+	const (
+		execTvp = "spDeleteUser @ID"
+	)
+	_, err := userConnection.Db.Exec(execTvp,
+		sql.Named("ID", id),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return true
 }
 
 // CheckEmailForgotPassword checks for an email then sends an email to the submitted email to change password.
@@ -142,7 +210,7 @@ func (userConnection UserConnection) CreateAdminUserIfNotExists() (entities.User
 }
 
 // CreateUser is call in Register and creates a new user.
-func (userConnection UserConnection) CreateUser(us entities.User) (entities.User, error) {
+func (userConnection UserConnection) CreateUser(us entities.User) bool {
 	password := []byte(us.Password)
 	hPass := hashAndSalt(password)
 
@@ -160,10 +228,10 @@ func (userConnection UserConnection) CreateUser(us entities.User) (entities.User
 		sql.Named("Userrole", us.Userrole),
 	)
 	if err != nil {
-		log.Fatal(err)
+		return false
 	}
 
-	return us, nil
+	return true
 }
 
 func hashAndSalt(pwd []byte) string {

@@ -15,11 +15,11 @@
                     <h3 class="page-title">
                         About Page
                     </h3>
-                    {{ if .Fname }}
-                        <p>Name: {{ .Fname }} {{ .Lname }}</p>
-                        <p>Username: {{ .Uname }}</p>
-                        <p>Email: {{ .Email }}</p>
-                        <p>Role: {{ .Userrole }}</p>
+                    {{ if .User.Fname }}
+                        <p>Name: {{ .User.Fname }} {{ .User.Lname }}</p>
+                        <p>Username: {{ .User.Uname }}</p>
+                        <p>Email: {{ .User.Email }}</p>
+                        <p>Role: {{ .User.Userrole }}</p>
                     {{ end }}
                 </div>
             </div>

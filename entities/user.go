@@ -9,8 +9,7 @@ type User struct {
 	Uname      string
 	Email      string
 	Password   string
-	Userrole   int8
-	status     int8
 	Facebookid int
-	IfLoggedIn bool
+	Userrole   int8
+	Status     int8
 }

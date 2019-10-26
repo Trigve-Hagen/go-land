@@ -21,8 +21,11 @@
                     {{ with .Errors.Server }}
                         <p class="server-error">{{ . }}</p>
                     {{ end }}
+                    {{ with .Errors.Success }}
+                        <p class="server-success">{{ . }}</p>
+                    {{ end }}
                     <form action="/posts/create" class="post-form" method="POST">
-                        <input type="submit" name="view-submit" class="post-buttons" value="Create Post"/>
+                        <input type="submit" name="create-submit" class="post-buttons" value="Create Post"/>
                     </form>
                     <div class="posts-wrapper">
                         <table class="table">

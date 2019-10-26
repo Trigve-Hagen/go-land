@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset='UTF-8'>
+        <title>View User</title>
+        <meta name='description' content='View user content.'>
+        {{template "head-section"}}
+    </head>
+    <body>
+        {{template "upper-header" .}}
+        {{template "header" .}}
+        <div class="page-main-container">
+            <div class="page-1200-container">
+                <div class="sidebar">
+                    {{template "sidebar-menu" .}}
+                </div>
+                <div class="content">
+                    <h1 class="page-title">
+                        {{ if .User.Fname }}
+                            {{ .User.Fname }}
+                        {{ end }}
+                    </h1>
+                    <div class="posts-wrapper">
+                        <p>Soon..</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {{template "footer" .}}
+    </body>
+</html>

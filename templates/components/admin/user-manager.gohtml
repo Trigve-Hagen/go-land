@@ -18,8 +18,58 @@
                     <h1 class="page-title">
                         User Manager
                     </h1>
-                    <div class="email-wrapper">
-                        {{template "email-body"}}
+                    {{ with .Errors.Server }}
+                        <p class="server-error">{{ . }}</p>
+                    {{ end }}
+                    {{ with .Errors.Success }}
+                        <p class="server-success">{{ . }}</p>
+                    {{ end }}
+                    <form action="/users/create" class="post-form" method="POST">
+                        <input type="submit" name="create-submit" class="post-buttons" value="Create User"/>
+                    </form>
+                    <div class="posts-wrapper">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th width="33%">Name</th>
+                                    <th width="33%">Email</th>
+                                    <th width="33%">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{ if .Users }}
+                                    {{ range .Users }}
+                                        <tr>
+                                            <td>{{ .Fname }} {{ .Lname }}</td>
+                                            <td>{{ .Email }}</td>
+                                            <td>
+                                                <form action="/users/handle" class="post-form" method="POST">
+                                                    <input type="hidden" name="method" value="VIEW"/>
+                                                    <input type="hidden" name="ID" value="{{ .ID }}"/>
+                                                    <input type="submit" name="view-submit" class="post-buttons" value="View"/>
+                                                </form>
+                                                <form action="/users/edit" class="post-form" method="POST">
+                                                    <input type="hidden" name="method" value="EDIT"/>
+                                                    <input type="hidden" name="ID" value="{{ .ID }}"/>
+                                                    <input type="submit" name="edit-submit" class="post-buttons" value="Edit"/>
+                                                </form>
+                                                {{ if ne .ID 1 }}
+                                                    <form action="/users/handle" class="post-form" method="POST">
+                                                        <input type="hidden" name="method" value="DELETE"/>
+                                                        <input type="hidden" name="ID" value="{{ .ID }}"/>
+                                                        <input type="submit" name="delete-submit" class="post-buttons" value="Delete"/>
+                                                    </form>
+                                                {{ end }}
+                                            </td>
+                                        </tr>
+                                    {{ end }}
+                                {{ else }}
+                                    <tr>
+                                        <td colspan="3">There are no users yet.</td>
+                                    </tr>
+                                {{ end }}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>

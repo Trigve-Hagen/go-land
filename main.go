@@ -44,6 +44,8 @@ type userData struct {
 	RePassword string
 	Userrole   int8
 	Message    message
+	User       entities.User
+	Users      []entities.User
 	Post       entities.Post
 	Posts      []entities.Post
 	Errors     map[string]string
@@ -82,6 +84,9 @@ func main() {
 	http.HandleFunc("/admin/go", goManager)
 	http.HandleFunc("/admin/sql", sqlManager)
 	http.HandleFunc("/admin/users", userManager)
+	http.HandleFunc("/users/create", createUser)
+	http.HandleFunc("/users/edit", editUser)
+	http.HandleFunc("/users/handle", handleUser)
 	http.HandleFunc("/admin/posts", postManager)
 	http.HandleFunc("/posts/create", createPost)
 	http.HandleFunc("/posts/edit", editPost)
@@ -96,6 +101,188 @@ func main() {
 	http.HandleFunc("/auth/comments", comments)
 	http.Handle("/public/", http.StripPrefix("/public", http.FileServer(http.Dir("public"))))
 	http.ListenAndServe(":3000", nil)
+}
+
+func userManager(res http.ResponseWriter, req *http.Request) {
+	ud := ifLoggedIn(req)
+	ud.Errors = make(map[string]string)
+	if ud.IfLoggedIn == true {
+		db, err := config.GetMSSQLDB()
+		if err != nil {
+			ud.Errors["Server"] = "Could not connect to database."
+			render(res, "user-manager.gohtml", ud)
+			return
+		}
+		userConnection := users.UserConnection{
+			Db: db,
+		}
+		ausers, err := userConnection.GetUsers(1, 10)
+		if err != nil {
+			ud.Errors["Server"] = "Failed to retreive users."
+			render(res, "user-manager.gohtml", ud)
+			return
+		}
+
+		ud.Users = ausers
+
+		render(res, "user-manager.gohtml", ud)
+		return
+	}
+	render(res, "index.gohtml", ud)
+}
+
+func createUser(res http.ResponseWriter, req *http.Request) {
+	ud := ifLoggedIn(req)
+	ud.Errors = make(map[string]string)
+	if ud.IfLoggedIn == true {
+		user := entities.User{
+			Fname:    "",
+			Lname:    "",
+			Uname:    "",
+			Email:    "",
+			Password: "",
+			Userrole: 1,
+		}
+		ud.User = user
+		ud.RePassword = ""
+		if req.Method == http.MethodPost {
+			vreg := &Register{
+				Fname:      req.FormValue("fname"),
+				Lname:      req.FormValue("lname"),
+				Uname:      req.FormValue("uname"),
+				Email:      req.FormValue("email"),
+				Userrole:   req.FormValue("userrole"),
+				Password:   req.FormValue("password"),
+				RePassword: req.FormValue("rePassword"),
+			}
+			if vreg.Password == vreg.RePassword {
+				if vreg.ValidateRegister() == false {
+					render(res, "create-user.gohtml", ud)
+					return
+				}
+
+				uuidreg, err := uuid.NewUUID()
+				if err != nil {
+					ud.Errors["Server"] = "Failed to create registration UUID."
+					render(res, "create-user.gohtml", ud)
+					return
+				}
+				user := entities.User{
+					UUID:     uuidreg.String(),
+					Fname:    vreg.Fname,
+					Lname:    vreg.Lname,
+					Uname:    vreg.Uname,
+					Email:    vreg.Email,
+					Password: vreg.Password,
+					Userrole: 2,
+				}
+				db, err := config.GetMSSQLDB()
+				if err != nil {
+					ud.Errors["Server"] = "Could not connect to database."
+					render(res, "create-user.gohtml", ud)
+					return
+				}
+				userConnection := users.UserConnection{
+					Db: db,
+				}
+				if userConnection.CreateUser(user) == false {
+					ud.Errors["Server"] = "Failed to create user."
+					render(res, "create-user.gohtml", ud)
+					return
+				}
+				ud.User = user
+
+				render(res, "user-manager.gohtml", ud)
+				return
+			}
+		}
+		render(res, "create-user.gohtml", ud)
+		return
+	}
+
+	render(res, "index.gohtml", ud)
+}
+
+func editUser(res http.ResponseWriter, req *http.Request) {
+	ud := ifLoggedIn(req)
+	if ud.IfLoggedIn == true {
+		db, err := config.GetMSSQLDB()
+		if err != nil {
+			http.Redirect(res, req, "/admin/users", http.StatusServiceUnavailable)
+			return
+		}
+		// create a function that gets the posts to pass to the return page
+		// also delete the image from the users folder
+		userConnection := users.UserConnection{
+			Db: db,
+		}
+		user, err := userConnection.GetUserByID(req.FormValue("ID"))
+		ud.User = user
+		if err != nil {
+			http.Redirect(res, req, "/admin/users", http.StatusServiceUnavailable)
+			return
+		}
+		render(res, "edit-user.gohtml", ud)
+		return
+	}
+	render(res, "index.gohtml", ud)
+}
+
+func handleUser(res http.ResponseWriter, req *http.Request) {
+	ud := ifLoggedIn(req)
+
+	if ud.IfLoggedIn == true {
+		if req.Method == http.MethodPost {
+			db, err := config.GetMSSQLDB()
+			if err != nil {
+				http.Redirect(res, req, "/admin/users", http.StatusServiceUnavailable)
+				return
+			}
+			// create a function that gets the posts to pass to the return page
+			// also delete the image from the users folder
+			userConnection := users.UserConnection{
+				Db: db,
+			}
+			method := req.FormValue("method")
+			switch method {
+			case "DELETE":
+				if req.FormValue("ID") == "1" {
+					http.Redirect(res, req, "/admin/users", http.StatusServiceUnavailable)
+					return
+				}
+				if userConnection.DeleteUser(req.FormValue("ID")) == false {
+					http.Redirect(res, req, "/admin/users", http.StatusServiceUnavailable)
+					return
+				}
+				ausers, err := userConnection.GetUsers(1, 10)
+				if err != nil {
+					http.Redirect(res, req, "/admin/users", http.StatusServiceUnavailable)
+					return
+				}
+
+				ud.Users = ausers
+
+				ud.Errors["Success"] = "User Deleted."
+				render(res, "user-manager.gohtml", ud)
+				return
+			case "UPDATE":
+				fmt.Println("UPDATE: ", req.FormValue("ID"))
+				render(res, "edit-user.gohtml", ud)
+				return
+			case "VIEW":
+				user, err := userConnection.GetUserByID(req.FormValue("ID"))
+				ud.User = user
+				if err != nil {
+					http.Redirect(res, req, "/admin/users", http.StatusServiceUnavailable)
+					return
+				}
+				render(res, "view-user.gohtml", ud)
+				return
+			}
+		}
+
+	}
+	render(res, "index.gohtml", ud)
 }
 
 func postManager(res http.ResponseWriter, req *http.Request) {
@@ -117,7 +304,6 @@ func postManager(res http.ResponseWriter, req *http.Request) {
 			render(res, "post-manager.gohtml", ud)
 			return
 		}
-
 		ud.Posts = aposts
 
 		render(res, "post-manager.gohtml", ud)
@@ -403,15 +589,6 @@ func sqlManager(res http.ResponseWriter, req *http.Request) {
 	render(res, "index.gohtml", ud)
 }
 
-func userManager(res http.ResponseWriter, req *http.Request) {
-	ud := ifLoggedIn(req)
-	if ud.IfLoggedIn == true {
-		render(res, "user-manager.gohtml", ud)
-		return
-	}
-	render(res, "index.gohtml", ud)
-}
-
 func index(res http.ResponseWriter, req *http.Request) {
 	ud := ifLoggedIn(req)
 	ud.Errors = make(map[string]string)
@@ -576,18 +753,13 @@ func login(res http.ResponseWriter, req *http.Request) {
 			render(res, "login.gohtml", ud)
 			return
 		}
+		ud.User = user
 		vwd := userData{
-			UUID:       user.UUID,
-			Fname:      user.Fname,
-			Lname:      user.Lname,
-			Uname:      user.Uname,
-			Email:      user.Email,
-			Password:   user.Password,
-			Userrole:   user.Userrole,
+			User:       user,
 			IfLoggedIn: true,
 		}
 		viewData[sess.UUID] = vwd
-		render(res, "admin.gohtml", user)
+		render(res, "admin.gohtml", ud)
 		return
 	}
 	render(res, "login.gohtml", ud)
@@ -639,8 +811,7 @@ func register(res http.ResponseWriter, req *http.Request) {
 		userConnection := users.UserConnection{
 			Db: db,
 		}
-		user, err = userConnection.CreateUser(user)
-		if err != nil {
+		if userConnection.CreateUser(user) == false {
 			ud.Errors["Server"] = "Failed to create user."
 			render(res, "register.gohtml", ud)
 			return
@@ -674,18 +845,13 @@ func register(res http.ResponseWriter, req *http.Request) {
 			return
 		}
 		vwd := userData{
-			UUID:       uuidreg.String(),
-			Fname:      vreg.Fname,
-			Lname:      vreg.Lname,
-			Uname:      vreg.Uname,
-			Email:      vreg.Email,
-			Password:   vreg.Password,
-			Userrole:   2,
+			User:       user,
 			IfLoggedIn: true,
 		}
 		viewData[uuidSess.String()] = vwd
 		ud.IfLoggedIn = true
-		render(res, "admin.gohtml", vwd)
+		ud.User = user
+		render(res, "admin.gohtml", ud)
 		return
 	}
 	render(res, "register.gohtml", ud)

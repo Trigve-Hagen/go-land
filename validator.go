@@ -76,6 +76,7 @@ type Register struct {
 	Lname      string
 	Uname      string
 	Email      string
+	Userrole   string
 	Password   string
 	RePassword string
 	Errors     map[string]string

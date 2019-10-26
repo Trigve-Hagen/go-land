@@ -26,8 +26,8 @@
                             <p class="error">{{ . }}</p>
                         {{ end }}
                         <label for="name" class="form-label">Name *</label>
-                        {{ if .Fname }}
-                            <input type="text" name="name" id="name" placeholder="Letters and spaces" class="form-item" value="{{ .Fname }} {{ .Lname }}"/>
+                        {{ if .User.Fname }}
+                            <input type="text" name="name" id="name" placeholder="Letters and spaces" class="form-item" value="{{ .User.Fname }} {{ .User.Lname }}"/>
                         {{ else }}
                             {{ if .Message.Name }}
                                 <input type="text" name="name" id="name" placeholder="Letters and spaces" class="form-item" value="{{ .Message.Name }}"/>
@@ -39,8 +39,8 @@
                             <p class="error">{{ . }}</p>
                         {{ end }}
                         <label for="email" class="form-label">Email *</label>
-                        {{ if .Email }}
-                            <input type="email" name="email" id="email" placeholder="someone@somewhere.com" class="form-item" value="{{ .Email }}"/>
+                        {{ if .User.Email }}
+                            <input type="email" name="email" id="email" placeholder="someone@somewhere.com" class="form-item" value="{{ .User.Email }}"/>
                         {{ else }}
                             {{ if .Message.Email }}
                                 <input type="email" name="email" id="email" placeholder="someone@somewhere.com" class="form-item" value="{{ .Message.Email }}"/>
