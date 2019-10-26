@@ -41,8 +41,9 @@ func (userConnection UserConnection) GetUsers(cp int, pp int) ([]entities.User, 
 		var facebookid int
 		var userrole int8
 		var status int8
+		var image string
 
-		err := rows.Scan(&id, &uuid, &fname, &lname, &uname, &email, &password, &facebookid, &userrole, &status)
+		err := rows.Scan(&id, &uuid, &fname, &lname, &uname, &email, &password, &facebookid, &userrole, &status, &image)
 		if err != nil {
 			fmt.Println(err)
 			return nil, err
@@ -58,6 +59,7 @@ func (userConnection UserConnection) GetUsers(cp int, pp int) ([]entities.User, 
 			Facebookid: facebookid,
 			Userrole:   userrole,
 			Status:     status,
+			Image:      image,
 		}
 		users = append(users, user)
 	}
@@ -83,8 +85,9 @@ func (userConnection UserConnection) GetUserByID(id string) (entities.User, erro
 	var facebookid int
 	var userrole int8
 	var status int8
+	var image string
 
-	err := result.Scan(&nid, &uuid, &fname, &lname, &uname, &email, &password, &facebookid, &userrole, &status)
+	err := result.Scan(&nid, &uuid, &fname, &lname, &uname, &email, &password, &facebookid, &userrole, &status, &image)
 
 	user := entities.User{
 		ID:       nid,
@@ -96,6 +99,7 @@ func (userConnection UserConnection) GetUserByID(id string) (entities.User, erro
 		Password: password,
 		Userrole: userrole,
 		Status:   status,
+		Image:    image,
 	}
 	if err != nil {
 		fmt.Println(err)
@@ -122,8 +126,9 @@ func (userConnection UserConnection) CheckLoginForm(uname string) (entities.User
 	var facebookid int
 	var userrole int8
 	var status int8
+	var image string
 
-	err := result.Scan(&ID, &uuid, &fname, &lname, &nuname, &email, &password, &facebookid, &userrole, &status)
+	err := result.Scan(&ID, &uuid, &fname, &lname, &nuname, &email, &password, &facebookid, &userrole, &status, &image)
 
 	user := entities.User{
 		ID:         ID,
@@ -136,6 +141,7 @@ func (userConnection UserConnection) CheckLoginForm(uname string) (entities.User
 		Facebookid: facebookid,
 		Userrole:   userrole,
 		Status:     status,
+		Image:      image,
 	}
 	if err != nil {
 		fmt.Println(err)
@@ -215,10 +221,11 @@ func (userConnection UserConnection) CreateUser(us entities.User) bool {
 	hPass := hashAndSalt(password)
 
 	const (
-		execTvp = "spCreateAdminIfNotExists @UUID, @Fname, @Lname, @Uname, @Email, @Password, @Facebookid, @Userrole"
+		execTvp = "spCreateUser @UUID, @Image, @Fname, @Lname, @Uname, @Email, @Password, @Facebookid, @Userrole"
 	)
 	_, err := userConnection.Db.Exec(execTvp,
 		sql.Named("UUID", us.UUID),
+		sql.Named("Image", us.Image),
 		sql.Named("Fname", us.Fname),
 		sql.Named("Lname", us.Lname),
 		sql.Named("Uname", us.Uname),

@@ -2,7 +2,7 @@
     <div class="sidebar-menu">
         <ul>
             {{ if .User.Userrole }}
-                <li><a href="/auth/profile" class="menu-links">My Profile</a></li>
+                <li><a href="/auth/profile" class="menu-links">Edit Profile</a></li>
                 <li><a href="/auth/comments" class="menu-links">My Comments</a></li>
                 {{ if eq .User.Userrole 1 }}
                     <li><a href="/admin/users" class="menu-links">Manage Users</a></li>

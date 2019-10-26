@@ -28,6 +28,11 @@
                             {{ with .Errors.Server }}
                                 <p class="server-error">{{ . }}</p>
                             {{ end }}
+                            {{ with .Errors.User.Image }}
+                                <p class="error">{{ . }}</p>
+                            {{ end }}
+                            <label for="imgfile" class="form-label">Image</label>
+                            <input type="file" name="imgfile" id="imgfile" />
                             {{ with .Errors.Fname }}
                                 <p class="error">{{ . }}</p>
                             {{ end }}

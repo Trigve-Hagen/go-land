@@ -2,10 +2,9 @@
 <html>
     <head>
         <meta charset='UTF-8'>
-        <title>Posts Manager</title>
-        <meta name='description' content='Manages the post content.'>
+        <title>View Post</title>
+        <meta name='description' content='View the post content.'>
         {{template "head-section"}}
-        <script src="https://cdn.ckeditor.com/ckeditor5/12.4.0/classic/ckeditor.js"></script>
     </head>
     <body>
         {{template "upper-header" .}}
@@ -16,13 +15,21 @@
                     {{template "sidebar-menu" .}}
                 </div>
                 <div class="content">
-                    <h1 class="page-title">
-                        {{ if .Post.Title }}
-                            {{ .Post.Title }}
-                        {{ end }}
-                    </h1>
                     <div class="posts-wrapper">
-                        <p>Soon..</p>
+                        <div class="post-sidebar">
+                            <div class="user-wrapper">
+                                <img src="../public/images/uploads/{{ .User.ID }}/{{ .Post.Image }}" class="user-image" alt="Ibeahero Logo"/>
+                            </div>
+                        </div>
+                        <div class="post-content">
+                            <h1 class="page-title">
+                                {{ if .Post.Title }}
+                                    {{ .Post.Title }}
+                                {{ end }}
+                            </h1>
+                            <p class="post-text">{{ .Post.Body }}</p>
+                        </div>
+                    </h1>
                     </div>
                 </div>
             </div>

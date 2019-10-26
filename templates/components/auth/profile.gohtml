@@ -16,10 +16,73 @@
                 </div>
                 <div class="content">
                     <h1 class="page-title">
-                        User Profile
+                        {{ if .User.Fname }}
+                            {{ .User.Fname }} {{ .User.Lname }}
+                        {{ end }}
                     </h1>
-                    <div class="email-wrapper">
-                        {{template "email-body"}}
+                    <div class="posts-wrapper">
+                        <form action="/users/handle" method="POST" enctype="multipart/form-data">
+                            <input type="hidden" name="method" value="UPDATE"/>
+                            <input type="hidden" name="ID" value="{{ .User.ID }}"/>
+                            {{ with .Errors.Success }}
+                                <p class="server-success">{{ . }}</p>
+                            {{ end }}
+                            {{ with .Errors.Server }}
+                                <p class="server-error">{{ . }}</p>
+                            {{ end }}
+                            {{ with .Errors.User.Image }}
+                                <p class="error">{{ . }}</p>
+                            {{ end }}
+                            <label for="imgfile" class="form-label">Image</label>
+                            <input type="file" name="imgfile" id="imgfile" />
+                            {{ with .Errors.Fname }}
+                                <p class="error">{{ . }}</p>
+                            {{ end }}
+                            <label for="fname" class="form-label">First Name</label>
+                            {{ if .User.Fname }}
+                                <input type="text" name="fname" id="fname" class="form-item" value="{{ .User.Fname }}"/>
+                            {{ else }}
+                                <input type="text" name="fname" id="fname" class="form-item" value=""/>
+                            {{ end }}
+                            {{ with .Errors.Lname }}
+                                <p class="error">{{ . }}</p>
+                            {{ end }}
+                            <label for="lname" class="form-label">Last Name</label>
+                            {{ if .User.Lname }}
+                                <input type="text" name="lname" id="lname" class="form-item" value="{{ .User.Lname }}"/>
+                            {{ else }}
+                                <input type="text" name="lname" id="lname" class="form-item" value=""/>
+                            {{ end }}
+                            {{ with .Errors.Uname }}
+                                <p class="error">{{ . }}</p>
+                            {{ end }}
+                            <label for="uname" class="form-label">Username</label>
+                            {{ if .User.Uname }}
+                                <input type="text" name="uname" id="uname" class="form-item" value="{{ .User.Uname }}"/>
+                            {{ else }}
+                                <input type="text" name="uname" id="uname" class="form-item" value=""/>
+                            {{ end }}
+                            {{ with .Errors.Email }}
+                                <p class="error">{{ . }}</p>
+                            {{ end }}
+                            <label for="email" class="form-label">Email</label>
+                            {{ if .User.Email }}
+                                <input type="email" name="email" id="email" class="form-item" value="{{ .User.Email }}"/>
+                            {{ else }}
+                                <input type="email" name="email" id="email" class="form-item" value=""/>
+                            {{ end }}
+                            {{ with .Errors.Password }}
+                                <p class="error">{{ . }}</p>
+                            {{ end }}
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" name="password" id="password" class="form-item" value=""/>
+                            {{ with .Errors.RePassword }}
+                                <p class="error">{{ . }}</p>
+                            {{ end }}
+                            <label for="rePassword" class="form-label">Confirm Password</label>
+                            <input type="password" name="rePassword" id="rePassword" class="form-item" value=""/>
+                            <input type="submit" name="edit-user" id="edit-submit" value="Edit User"/>
+                        </form>
                     </div>
                 </div>
             </div>

@@ -12,4 +12,5 @@ type User struct {
 	Facebookid int
 	Userrole   int8
 	Status     int8
+	Image      string
 }

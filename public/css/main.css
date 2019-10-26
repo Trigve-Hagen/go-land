@@ -40,6 +40,16 @@ p {
     padding: 0;
 }
 
+.index-img-wrapper {
+    max-width: 675px;
+    margin: 0 auto;
+}
+
+img.user-image {
+    max-width: 675px;
+    width: 100%;
+}
+
 @media screen {
     .page-main-container {
         display: flex;
@@ -112,6 +122,22 @@ p {
         margin:0 auto;
     }
 
+    .user-wrapper {
+        padding: 20px;
+        border: 1px solid #dddddd;
+        max-width: 450px;
+        margin:30px auto;
+    }
+
+    .user-text {
+        font-weight: 300;
+        margin-top: 10px;
+        margin-bottom: 10px;
+        text-align: center;
+        text-transform: uppercase;
+        font-family: 'Segoe Script', sans-serif;
+    }
+
     table.table {
         width: 100%;
     }
@@ -133,6 +159,14 @@ p {
     a.actions-links {
         padding: 10px;
         margin-bottom: 5px
+    }
+
+    .post-sidebar {
+        width: 100%;
+    }
+    
+    .post-content {
+        width: 100%;
     }
 }
 
@@ -173,5 +207,28 @@ p {
     .content {
         flex-grow: 2;
         margin-left:20px;
+    }
+
+    .posts-wrapper {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    .post-sidebar {
+        flex-grow: 1;
+        max-width: 300px;
+    }
+
+    .post-content {
+        flex-grow: 2;
+        margin-left:20px;
+        padding-top: 30px;
+    }
+
+    .post-text {
+        font-weight: 300;
+        line-height: 1.5rem;
+        text-align: center;
     }
 }

@@ -169,6 +169,7 @@ func createUser(res http.ResponseWriter, req *http.Request) {
 				}
 				user := entities.User{
 					UUID:     uuidreg.String(),
+					Image:    "",
 					Fname:    vreg.Fname,
 					Lname:    vreg.Lname,
 					Uname:    vreg.Uname,
@@ -218,6 +219,7 @@ func editUser(res http.ResponseWriter, req *http.Request) {
 		}
 		user, err := userConnection.GetUserByID(req.FormValue("ID"))
 		ud.User = user
+		ud.User.Userrole = 1
 		if err != nil {
 			http.Redirect(res, req, "/admin/users", http.StatusServiceUnavailable)
 			return
@@ -272,6 +274,7 @@ func handleUser(res http.ResponseWriter, req *http.Request) {
 			case "VIEW":
 				user, err := userConnection.GetUserByID(req.FormValue("ID"))
 				ud.User = user
+				ud.User.Userrole = 1
 				if err != nil {
 					http.Redirect(res, req, "/admin/users", http.StatusServiceUnavailable)
 					return
@@ -314,7 +317,7 @@ func postManager(res http.ResponseWriter, req *http.Request) {
 
 func handlePost(res http.ResponseWriter, req *http.Request) {
 	ud := ifLoggedIn(req)
-
+	ud.Errors = make(map[string]string)
 	if ud.IfLoggedIn == true {
 		if req.Method == http.MethodPost {
 			db, err := config.GetMSSQLDB()
@@ -466,7 +469,6 @@ func createPost(res http.ResponseWriter, req *http.Request) {
 		if req.Method == http.MethodPost {
 			mf, fh, err := req.FormFile("imgfile")
 			if err != nil {
-				fmt.Println("Here 1")
 				render(res, "create-post.gohtml", ud)
 				return
 			}
@@ -479,17 +481,17 @@ func createPost(res http.ResponseWriter, req *http.Request) {
 
 			wd, err := os.Getwd()
 			if err != nil {
-				fmt.Println("Here 2 ", fname)
 				render(res, "create-post.gohtml", ud)
 				return
 			}
 
-			newpath := filepath.Join(wd, "public", "images", "uploads", ud.ID)
+			newpath := filepath.Join(wd, "public", "images", "uploads", "1")
+			fmt.Println(newpath, ud.User.ID)
 			if _, err := os.Stat(newpath); os.IsNotExist(err) {
 				os.MkdirAll(newpath, os.ModePerm)
 			}
 
-			path := filepath.Join(wd, "public", "images", "uploads", ud.ID, fname)
+			path := filepath.Join(wd, "public", "images", "uploads", "1", fname)
 			nf, err := os.Create(path)
 			if err != nil {
 				fmt.Println("Here 3 ", fname)
