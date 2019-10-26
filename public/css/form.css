@@ -1,5 +1,10 @@
 /* Form Styles */
 
+form {
+    max-width: 960px;
+    margin: 0 auto;
+}
+
 select {
     width: 100%;
     border: 1px solid #D8D8D8;

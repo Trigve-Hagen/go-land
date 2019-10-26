@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset='UTF-8'>
+        <title>Posts Manager</title>
+        <meta name='description' content='Manages the post content.'>
+        {{template "head-section"}}
+        <script src="https://cdn.ckeditor.com/ckeditor5/12.4.0/classic/ckeditor.js"></script>
+    </head>
+    <body>
+        {{template "upper-header" .}}
+        {{template "header" .}}
+        <div class="page-main-container">
+            <div class="page-1200-container">
+                <div class="sidebar">
+                    {{template "sidebar-menu" .}}
+                </div>
+                <div class="content">
+                    <h1 class="page-title">
+                        {{ if .Post.Title }}
+                            {{ .Post.Title }}
+                        {{ end }}
+                    </h1>
+                    <div class="posts-wrapper">
+                        <p>Soon..</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {{template "footer" .}}
+    </body>
+</html>

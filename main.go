@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -83,6 +84,7 @@ func main() {
 	http.HandleFunc("/admin/users", userManager)
 	http.HandleFunc("/admin/posts", postManager)
 	http.HandleFunc("/posts/create", createPost)
+	http.HandleFunc("/posts/edit", editPost)
 	http.HandleFunc("/posts/handle", handlePost)
 	http.HandleFunc("/admin/comments", commentManager)
 	http.HandleFunc("/login", login)
@@ -126,21 +128,139 @@ func postManager(res http.ResponseWriter, req *http.Request) {
 
 func handlePost(res http.ResponseWriter, req *http.Request) {
 	ud := ifLoggedIn(req)
+
 	if ud.IfLoggedIn == true {
 		if req.Method == http.MethodPost {
+			db, err := config.GetMSSQLDB()
+			if err != nil {
+				http.Redirect(res, req, "/admin/posts", http.StatusServiceUnavailable)
+				return
+			}
+			// create a function that gets the posts to pass to the return page
+			// also delete the image from the users folder
+			postConnection := posts.PostConnection{
+				Db: db,
+			}
 			method := req.FormValue("method")
 			switch method {
 			case "DELETE":
-				fmt.Println("Delete ", req.FormValue("ID"))
+				if postConnection.DeletePost(req.FormValue("ID")) == false {
+					http.Redirect(res, req, "/admin/posts", http.StatusServiceUnavailable)
+					return
+				}
+				aposts, err := postConnection.GetPosts(1, 10)
+				if err != nil {
+					http.Redirect(res, req, "/admin/posts", http.StatusServiceUnavailable)
+					return
+				}
+
+				ud.Posts = aposts
+
+				ud.Errors["Success"] = "Post Deleted."
+				render(res, "post-manager.gohtml", ud)
+				return
 			case "UPDATE":
-				fmt.Println("Update ", req.FormValue("ID"))
+				mf, fh, err := req.FormFile("imgfile")
+				if err != nil {
+					http.Redirect(res, req, "/posts/edit", http.StatusServiceUnavailable)
+					return
+				}
+				defer mf.Close()
+
+				ext := strings.Split(fh.Filename, ".")[1]
+				h := sha1.New()
+				io.Copy(h, mf)
+				fname := fmt.Sprintf("%x", h.Sum(nil)) + "." + ext
+
+				wd, err := os.Getwd()
+				if err != nil {
+					http.Redirect(res, req, "/posts/edit", http.StatusServiceUnavailable)
+					return
+				}
+
+				newpath := filepath.Join(wd, "public", "images", "uploads", ud.ID)
+				if _, err := os.Stat(newpath); os.IsNotExist(err) {
+					os.MkdirAll(newpath, os.ModePerm)
+				}
+
+				path := filepath.Join(wd, "public", "images", "uploads", ud.ID, fname)
+				nf, err := os.Create(path)
+				if err != nil {
+					http.Redirect(res, req, "/posts/edit", http.StatusServiceUnavailable)
+					return
+				}
+				defer nf.Close()
+
+				mf.Seek(0, 0)
+				io.Copy(nf, mf)
+
+				postid, err := strconv.Atoi(req.FormValue("ID"))
+				if err != nil {
+					http.Redirect(res, req, "/posts/edit", http.StatusServiceUnavailable)
+					return
+				}
+
+				vpost := &VPosts{
+					Title: req.FormValue("title"),
+					Body:  req.FormValue("body"),
+				}
+				if vpost.ValidatePost() == false {
+					render(res, "edit-post.gohtml", ud)
+					return
+				}
+
+				apost := entities.Post{
+					ID:       postid,
+					UserUUID: ud.UUID,
+					Image:    fname,
+					Title:    vpost.Title,
+					Body:     vpost.Body,
+				}
+				ud.Post = apost
+				if postConnection.UpdatePost(apost) == false {
+					ud.Errors["Server"] = "Post failed to Updated."
+					render(res, "edit-post.gohtml", ud)
+					return
+				}
+
+				ud.Errors["Success"] = "Post Updated."
+				render(res, "edit-post.gohtml", ud)
+				return
 			case "VIEW":
-				fmt.Println("Veiw ", req.FormValue("ID"))
+				post, err := postConnection.GetPostByID(req.FormValue("ID"))
+				ud.Post = post
+				if err != nil {
+					http.Redirect(res, req, "/admin/posts", http.StatusServiceUnavailable)
+					return
+				}
+				render(res, "view-post.gohtml", ud)
+				return
 			}
 		}
-		fmt.Println(req.URL)
-		http.Redirect(res, req, "/admin/posts", http.StatusMovedPermanently)
-		render(res, "post-manager.gohtml", ud)
+	}
+	render(res, "index.gohtml", ud)
+}
+
+func editPost(res http.ResponseWriter, req *http.Request) {
+	ud := ifLoggedIn(req)
+	if ud.IfLoggedIn == true {
+		db, err := config.GetMSSQLDB()
+		if err != nil {
+			http.Redirect(res, req, "/admin/posts", http.StatusServiceUnavailable)
+			return
+		}
+		// create a function that gets the posts to pass to the return page
+		// also delete the image from the users folder
+		postConnection := posts.PostConnection{
+			Db: db,
+		}
+		post, err := postConnection.GetPostByID(req.FormValue("ID"))
+		ud.Post = post
+		if err != nil {
+			http.Redirect(res, req, "/admin/posts", http.StatusServiceUnavailable)
+			return
+		}
+		render(res, "edit-post.gohtml", ud)
 		return
 	}
 	render(res, "index.gohtml", ud)
