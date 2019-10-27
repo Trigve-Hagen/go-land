@@ -144,7 +144,6 @@ func (userConnection UserConnection) CheckLoginForm(uname string) (entities.User
 		Image:      image,
 	}
 	if err != nil {
-		fmt.Println(err)
 		return user, err
 	}
 	return user, err
@@ -241,10 +240,29 @@ func (userConnection UserConnection) CreateUser(us entities.User) bool {
 	return true
 }
 
-// UpdateUser updates an existing user.
+// UpdateUser updates an existing user without image.
 func (userConnection UserConnection) UpdateUser(us entities.User) bool {
 	const (
-		execTvp = "spUpdateUser @ID, @Image, @Fname, @Lname, @Uname, @Email"
+		execTvp = "spUpdateUser @ID, @Fname, @Lname, @Uname, @Email"
+	)
+	_, err := userConnection.Db.Exec(execTvp,
+		sql.Named("ID", us.ID),
+		sql.Named("Fname", us.Fname),
+		sql.Named("Lname", us.Lname),
+		sql.Named("Uname", us.Uname),
+		sql.Named("Email", us.Email),
+	)
+	if err != nil {
+		return false
+	}
+
+	return true
+}
+
+// UpdateUserImage updates an existing user with image.
+func (userConnection UserConnection) UpdateUserImage(us entities.User) bool {
+	const (
+		execTvp = "spUpdateUserImage @ID, @Image, @Fname, @Lname, @Uname, @Email"
 	)
 	_, err := userConnection.Db.Exec(execTvp,
 		sql.Named("ID", us.ID),
@@ -255,6 +273,7 @@ func (userConnection UserConnection) UpdateUser(us entities.User) bool {
 		sql.Named("Email", us.Email),
 	)
 	if err != nil {
+		fmt.Println(err)
 		return false
 	}
 

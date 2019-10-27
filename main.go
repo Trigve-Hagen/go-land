@@ -246,7 +246,6 @@ func handleUser(res http.ResponseWriter, req *http.Request) {
 				Db: db,
 			}
 			method := req.FormValue("method")
-			fmt.Println(method)
 			switch method {
 			case "DELETE":
 				if req.FormValue("ID") == "1" {
@@ -282,7 +281,7 @@ func handleUser(res http.ResponseWriter, req *http.Request) {
 
 				fname := ""
 				mf, fh, err := req.FormFile("imgfile")
-				if mf != nil {
+				if fh != nil {
 					if err != nil {
 						http.Redirect(res, req, "/users/edit", http.StatusServiceUnavailable)
 						return
@@ -292,7 +291,7 @@ func handleUser(res http.ResponseWriter, req *http.Request) {
 					ext := strings.Split(fh.Filename, ".")[1]
 					h := sha1.New()
 					io.Copy(h, mf)
-					fname := fmt.Sprintf("%x", h.Sum(nil)) + "." + ext
+					fname = fmt.Sprintf("%x", h.Sum(nil)) + "." + ext
 
 					wd, err := os.Getwd()
 					if err != nil {
@@ -323,44 +322,57 @@ func handleUser(res http.ResponseWriter, req *http.Request) {
 					return
 				}
 
-				db, err := config.GetMSSQLDB()
-				if err != nil {
-					ud.Errors["Server"] = "Could not connect to database."
-					switch req.FormValue("if_profile") {
-					case "0":
-						render(res, "edit-user.gohtml", ud)
-					case "1":
-						render(res, "profile.gohtml", ud)
+				if fname != "" {
+					user := entities.User{
+						ID:         userid,
+						UUID:       ud.User.UUID,
+						Fname:      vreg.Fname,
+						Lname:      vreg.Lname,
+						Uname:      vreg.Uname,
+						Email:      vreg.Email,
+						Password:   ud.User.Password,
+						Userrole:   ud.User.Userrole,
+						Facebookid: 0,
+						Image:      fname,
 					}
-					return
-				}
-				fmt.Println(userid)
-				user := entities.User{
-					ID:         userid,
-					UUID:       ud.User.UUID,
-					Fname:      vreg.Fname,
-					Lname:      vreg.Lname,
-					Uname:      vreg.Uname,
-					Email:      vreg.Email,
-					Password:   ud.User.Password,
-					Userrole:   ud.User.Userrole,
-					Facebookid: 0,
-					Image:      fname,
-				}
-				ud.User = user
-				userConnection := users.UserConnection{
-					Db: db,
-				}
-				if userConnection.UpdateUser(user) == false {
-					ud.Errors["Server"] = "Failed to update user."
-					switch req.FormValue("if_profile") {
-					case "0":
-						render(res, "edit-user.gohtml", ud)
-					case "1":
-						render(res, "profile.gohtml", ud)
+					ud.User = user
+					if userConnection.UpdateUserImage(user) == false {
+						ud.Errors["Server"] = "Failed to update user."
+						switch req.FormValue("if_profile") {
+						case "0":
+							render(res, "edit-user.gohtml", ud)
+						case "1":
+							render(res, "profile.gohtml", ud)
+						}
+						return
 					}
-					return
+
+				} else {
+					user := entities.User{
+						ID:         userid,
+						UUID:       ud.User.UUID,
+						Fname:      vreg.Fname,
+						Lname:      vreg.Lname,
+						Uname:      vreg.Uname,
+						Email:      vreg.Email,
+						Password:   ud.User.Password,
+						Userrole:   ud.User.Userrole,
+						Facebookid: 0,
+					}
+					ud.User = user
+					if userConnection.UpdateUser(user) == false {
+						ud.Errors["Server"] = "Failed to update user."
+						switch req.FormValue("if_profile") {
+						case "0":
+							render(res, "edit-user.gohtml", ud)
+						case "1":
+							render(res, "profile.gohtml", ud)
+						}
+						return
+					}
 				}
+
+				ud = updateViewData(req, ud)
 
 				ud.Errors["Success"] = "User Updated."
 				if req.FormValue("if_profile") == "1" {
@@ -393,20 +405,7 @@ func handleUser(res http.ResponseWriter, req *http.Request) {
 					}
 					return
 				}
-				db, err := config.GetMSSQLDB()
-				if err != nil {
-					ud.Errors["Server"] = "Could not connect to database."
-					switch req.FormValue("if_profile") {
-					case "0":
-						render(res, "edit-user.gohtml", ud)
-					case "1":
-						render(res, "profile.gohtml", ud)
-					}
-					return
-				}
-				userConnection := users.UserConnection{
-					Db: db,
-				}
+
 				if userConnection.UpdatePassword(pass.Password, req.FormValue("ID")) == false {
 					ud.Errors["Server"] = "Failed to update user password."
 					switch req.FormValue("if_profile") {
@@ -523,7 +522,7 @@ func handlePost(res http.ResponseWriter, req *http.Request) {
 			case "UPDATE":
 				fname := ""
 				mf, fh, err := req.FormFile("imgfile")
-				if mf != nil {
+				if fh != nil {
 					if err != nil {
 						http.Redirect(res, req, "/posts/edit", http.StatusServiceUnavailable)
 						return
@@ -533,7 +532,7 @@ func handlePost(res http.ResponseWriter, req *http.Request) {
 					ext := strings.Split(fh.Filename, ".")[1]
 					h := sha1.New()
 					io.Copy(h, mf)
-					fname := fmt.Sprintf("%x", h.Sum(nil)) + "." + ext
+					fname = fmt.Sprintf("%x", h.Sum(nil)) + "." + ext
 
 					wd, err := os.Getwd()
 					if err != nil {
@@ -557,7 +556,6 @@ func handlePost(res http.ResponseWriter, req *http.Request) {
 					mf.Seek(0, 0)
 					io.Copy(nf, mf)
 				}
-
 				postid, err := strconv.Atoi(req.FormValue("postid"))
 				if err != nil {
 					http.Redirect(res, req, "/posts/edit", http.StatusServiceUnavailable)
@@ -572,19 +570,33 @@ func handlePost(res http.ResponseWriter, req *http.Request) {
 					render(res, "edit-post.gohtml", ud)
 					return
 				}
-
-				apost := entities.Post{
-					ID:       postid,
-					UserUUID: ud.UUID,
-					Image:    fname,
-					Title:    vpost.Title,
-					Body:     vpost.Body,
-				}
-				ud.Post = apost
-				if postConnection.UpdatePost(apost) == false {
-					ud.Errors["Server"] = "Post failed to Updated."
-					render(res, "edit-post.gohtml", ud)
-					return
+				if fname == "" {
+					apost := entities.Post{
+						ID:       postid,
+						UserUUID: ud.UUID,
+						Title:    vpost.Title,
+						Body:     vpost.Body,
+					}
+					ud.Post = apost
+					if postConnection.UpdatePost(apost) == false {
+						ud.Errors["Server"] = "Post failed to Updated."
+						render(res, "edit-post.gohtml", ud)
+						return
+					}
+				} else {
+					apost := entities.Post{
+						ID:       postid,
+						UserUUID: ud.UUID,
+						Image:    fname,
+						Title:    vpost.Title,
+						Body:     vpost.Body,
+					}
+					ud.Post = apost
+					if postConnection.UpdatePostImage(apost) == false {
+						ud.Errors["Server"] = "Post failed to Updated."
+						render(res, "edit-post.gohtml", ud)
+						return
+					}
 				}
 
 				ud.Errors["Success"] = "Post Updated."
@@ -661,7 +673,7 @@ func createPost(res http.ResponseWriter, req *http.Request) {
 		if req.Method == http.MethodPost {
 			fname := ""
 			mf, fh, err := req.FormFile("imgfile")
-			if mf != nil {
+			if fh != nil {
 				if err != nil {
 					render(res, "create-post.gohtml", ud)
 					return
@@ -671,7 +683,7 @@ func createPost(res http.ResponseWriter, req *http.Request) {
 				ext := strings.Split(fh.Filename, ".")[1]
 				h := sha1.New()
 				io.Copy(h, mf)
-				fname := fmt.Sprintf("%x", h.Sum(nil)) + "." + ext
+				fname = fmt.Sprintf("%x", h.Sum(nil)) + "." + ext
 
 				wd, err := os.Getwd()
 				if err != nil {
@@ -688,7 +700,6 @@ func createPost(res http.ResponseWriter, req *http.Request) {
 				path := filepath.Join(wd, "public", "images", "uploads", req.FormValue("ID"), fname)
 				nf, err := os.Create(path)
 				if err != nil {
-					fmt.Println("Here 3 ", fname)
 					render(res, "create-post.gohtml", ud)
 					return
 				}
@@ -729,9 +740,7 @@ func createPost(res http.ResponseWriter, req *http.Request) {
 				return
 			}
 
-			ud.Post = apost
-
-			render(res, "create-post.gohtml", ud)
+			http.Redirect(res, req, "/admin/posts", http.StatusServiceUnavailable)
 			return
 		}
 		render(res, "create-post.gohtml", ud)
@@ -1057,7 +1066,7 @@ func register(res http.ResponseWriter, req *http.Request) {
 
 func admin(res http.ResponseWriter, req *http.Request) {
 	ud := ifLoggedIn(req)
-	fmt.Println(ud)
+	fmt.Println(ud.User.Image)
 	if ud.IfLoggedIn == true {
 		render(res, "admin.gohtml", ud)
 		return
@@ -1098,6 +1107,18 @@ func forgotPassword(res http.ResponseWriter, req *http.Request) {
 		ud.Errors["Success"] = "Please check for an email to reset you password."
 	}
 	render(res, "forgot-password.gohtml", ud)
+}
+
+func updateViewData(req *http.Request, ud userData) userData {
+	c, err := req.Cookie("__ibes_")
+	_ = c
+
+	if err != nil {
+		return userData{}
+	}
+	viewData[c.Value] = ud
+	vud := viewData[c.Value]
+	return vud
 }
 
 // doubles as ifLoggedIn and return userData object to be loaded with data from posts and comments

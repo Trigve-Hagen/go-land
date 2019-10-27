@@ -63,15 +63,33 @@ func (postConnection PostConnection) CreatePost(pt entities.Post) bool {
 	return true
 }
 
-// UpdatePost updates a post in the database.
-func (postConnection PostConnection) UpdatePost(pt entities.Post) bool {
+// UpdatePostImage updates a post in the database with an image.
+func (postConnection PostConnection) UpdatePostImage(pt entities.Post) bool {
 	const (
-		execTvp = "spUpdatePost @ID, @UserUUID, @Image, @Title, @Body"
+		execTvp = "spUpdatePostImage @ID, @UserUUID, @Image, @Title, @Body"
 	)
 	_, err := postConnection.Db.Exec(execTvp,
 		sql.Named("ID", pt.ID),
 		sql.Named("UserUUID", pt.UserUUID),
 		sql.Named("Image", pt.Image),
+		sql.Named("Title", pt.Title),
+		sql.Named("Body", pt.Body),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return true
+}
+
+// UpdatePost updates a post in the database without image.
+func (postConnection PostConnection) UpdatePost(pt entities.Post) bool {
+	const (
+		execTvp = "spUpdatePost @ID, @UserUUID, @Title, @Body"
+	)
+	_, err := postConnection.Db.Exec(execTvp,
+		sql.Named("ID", pt.ID),
+		sql.Named("UserUUID", pt.UserUUID),
 		sql.Named("Title", pt.Title),
 		sql.Named("Body", pt.Body),
 	)
