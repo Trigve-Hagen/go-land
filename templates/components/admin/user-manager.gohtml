@@ -31,9 +31,8 @@
                         <table class="table">
                             <thead>
                                 <tr>
-                                    <th width="33%">Name</th>
-                                    <th width="33%">Email</th>
-                                    <th width="33%">Actions</th>
+                                    <th width="50%">Name</th>
+                                    <th width="50%">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -41,8 +40,7 @@
                                     {{ range .Users }}
                                         <tr>
                                             <td>{{ .Fname }} {{ .Lname }}</td>
-                                            <td>{{ .Email }}</td>
-                                            <td>
+                                            <td align="right">
                                                 <form action="/users/handle" class="post-form" method="POST">
                                                     <input type="hidden" name="method" value="VIEW"/>
                                                     <input type="hidden" name="ID" value="{{ .ID }}"/>
@@ -58,6 +56,24 @@
                                                         <input type="hidden" name="method" value="DELETE"/>
                                                         <input type="hidden" name="ID" value="{{ .ID }}"/>
                                                         <input type="submit" name="delete-submit" class="post-buttons" value="Delete"/>
+                                                    </form>
+                                                
+                                                    <form action="/users/handle" class="post-form" method="POST">
+                                                        <input type="hidden" name="method" value="UPDATE-STATUS"/>
+                                                        <input type="hidden" name="ID" value="{{ .ID }}"/>
+                                                        <select name="status" class="status-select">
+                                                            {{ if eq .Status 0 }}
+                                                                <option value="0" selected="selected">0</option>
+                                                            {{ else }}
+                                                                <option value="0">0</option>
+                                                            {{ end }}
+                                                            {{ if eq .Status 1 }}
+                                                                <option value="1" selected="selected">1</option>
+                                                            {{ else }}
+                                                                <option value="1">1</option>
+                                                            {{ end }}
+                                                        </select>
+                                                        <input type="submit" name="edit-submit" class="post-buttons" value="Status"/>
                                                     </form>
                                                 {{ end }}
                                             </td>

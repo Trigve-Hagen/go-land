@@ -84,6 +84,12 @@ select {
     padding: 1rem;
 }
 
+.status-select {
+    padding: .5rem !important;
+    display: inline-block;
+    margin-bottom: 5px;
+}
+
 #imgfile {
     margin-bottom: 15px;
 }
@@ -113,6 +119,7 @@ select {
 }
 
 .post-buttons {
+    display: inline-block;
     color: #ffffff;
     background: #3750a9;
     border: 2px solid #ffffff;

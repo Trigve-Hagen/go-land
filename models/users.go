@@ -241,6 +241,71 @@ func (userConnection UserConnection) CreateUser(us entities.User) bool {
 	return true
 }
 
+// UpdateUser updates an existing user.
+func (userConnection UserConnection) UpdateUser(us entities.User) bool {
+	const (
+		execTvp = "spUpdateUser @ID, @Image, @Fname, @Lname, @Uname, @Email"
+	)
+	_, err := userConnection.Db.Exec(execTvp,
+		sql.Named("ID", us.ID),
+		sql.Named("Image", us.Image),
+		sql.Named("Fname", us.Fname),
+		sql.Named("Lname", us.Lname),
+		sql.Named("Uname", us.Uname),
+		sql.Named("Email", us.Email),
+	)
+	if err != nil {
+		return false
+	}
+
+	return true
+}
+
+// UpdatePassword updates an existing users password.
+func (userConnection UserConnection) UpdatePassword(password string, ID string) bool {
+	passw := []byte(password)
+	hPass := hashAndSalt(passw)
+
+	const (
+		execTvp = "spUpdatePassword @Password, @ID"
+	)
+	_, err := userConnection.Db.Exec(execTvp,
+		sql.Named("Password", hPass),
+		sql.Named("ID", ID),
+	)
+	if err != nil {
+		return false
+	}
+
+	return true
+}
+
+// UpdateStatus updates an existing users status.
+func (userConnection UserConnection) UpdateStatus(status string, ID string) bool {
+	const (
+		execTvp = "spUpdateStatus @Status, @ID"
+	)
+	if status == "1" {
+		_, err := userConnection.Db.Exec(execTvp,
+			sql.Named("Status", 1),
+			sql.Named("ID", ID),
+		)
+		if err != nil {
+			return false
+		}
+	} else {
+		_, err := userConnection.Db.Exec(execTvp,
+			sql.Named("Status", 0),
+			sql.Named("ID", ID),
+		)
+		if err != nil {
+			return false
+		}
+	}
+
+	return true
+}
+
 func hashAndSalt(pwd []byte) string {
 	hash, err := bcrypt.GenerateFromPassword(pwd, bcrypt.MinCost)
 	if err != nil {

@@ -232,7 +232,7 @@ func editUser(res http.ResponseWriter, req *http.Request) {
 
 func handleUser(res http.ResponseWriter, req *http.Request) {
 	ud := ifLoggedIn(req)
-
+	ud.Errors = make(map[string]string)
 	if ud.IfLoggedIn == true {
 		if req.Method == http.MethodPost {
 			db, err := config.GetMSSQLDB()
@@ -246,6 +246,7 @@ func handleUser(res http.ResponseWriter, req *http.Request) {
 				Db: db,
 			}
 			method := req.FormValue("method")
+			fmt.Println(method)
 			switch method {
 			case "DELETE":
 				if req.FormValue("ID") == "1" {
@@ -267,9 +268,185 @@ func handleUser(res http.ResponseWriter, req *http.Request) {
 				ud.Errors["Success"] = "User Deleted."
 				render(res, "user-manager.gohtml", ud)
 				return
-			case "UPDATE":
-				fmt.Println("UPDATE: ", req.FormValue("ID"))
-				render(res, "edit-user.gohtml", ud)
+			case "UPDATE-USER":
+				vreg := &VUser{
+					Fname: req.FormValue("fname"),
+					Lname: req.FormValue("lname"),
+					Uname: req.FormValue("uname"),
+					Email: req.FormValue("email"),
+				}
+				if vreg.ValidateUser() == false {
+					render(res, "edit-user.gohtml", vreg)
+					return
+				}
+
+				mf, fh, err := req.FormFile("imgfile")
+				if err != nil {
+					http.Redirect(res, req, "/users/edit", http.StatusServiceUnavailable)
+					return
+				}
+				defer mf.Close()
+
+				ext := strings.Split(fh.Filename, ".")[1]
+				h := sha1.New()
+				io.Copy(h, mf)
+				fname := fmt.Sprintf("%x", h.Sum(nil)) + "." + ext
+
+				wd, err := os.Getwd()
+				if err != nil {
+					http.Redirect(res, req, "/users/edit", http.StatusServiceUnavailable)
+					return
+				}
+
+				newpath := filepath.Join(wd, "public", "images", "uploads", req.FormValue("ID"))
+				if _, err := os.Stat(newpath); os.IsNotExist(err) {
+					os.MkdirAll(newpath, os.ModePerm)
+				}
+
+				path := filepath.Join(wd, "public", "images", "uploads", req.FormValue("ID"), fname)
+				nf, err := os.Create(path)
+				if err != nil {
+					http.Redirect(res, req, "/users/edit", http.StatusServiceUnavailable)
+					return
+				}
+				defer nf.Close()
+
+				mf.Seek(0, 0)
+				io.Copy(nf, mf)
+
+				userid, err := strconv.Atoi(req.FormValue("ID"))
+				if err != nil {
+					http.Redirect(res, req, "/users/edit", http.StatusServiceUnavailable)
+					return
+				}
+
+				db, err := config.GetMSSQLDB()
+				if err != nil {
+					ud.Errors["Server"] = "Could not connect to database."
+					switch req.FormValue("if_profile") {
+					case "0":
+						render(res, "edit-user.gohtml", ud)
+					case "1":
+						render(res, "profile.gohtml", ud)
+					}
+					return
+				}
+				fmt.Println(userid)
+				user := entities.User{
+					ID:         userid,
+					UUID:       ud.User.UUID,
+					Fname:      vreg.Fname,
+					Lname:      vreg.Lname,
+					Uname:      vreg.Uname,
+					Email:      vreg.Email,
+					Password:   ud.User.Password,
+					Userrole:   ud.User.Userrole,
+					Facebookid: 0,
+					Image:      fname,
+				}
+				ud.User = user
+				userConnection := users.UserConnection{
+					Db: db,
+				}
+				if userConnection.UpdateUser(user) == false {
+					ud.Errors["Server"] = "Failed to update user."
+					switch req.FormValue("if_profile") {
+					case "0":
+						render(res, "edit-user.gohtml", ud)
+					case "1":
+						render(res, "profile.gohtml", ud)
+					}
+					return
+				}
+
+				ud.Errors["Success"] = "User Updated."
+				if req.FormValue("if_profile") == "1" {
+					switch req.FormValue("if_profile") {
+					case "0":
+						render(res, "edit-user.gohtml", ud)
+					case "1":
+						render(res, "profile.gohtml", ud)
+					}
+					return
+				}
+				switch req.FormValue("if_profile") {
+				case "0":
+					render(res, "edit-user.gohtml", ud)
+				case "1":
+					render(res, "profile.gohtml", ud)
+				}
+				return
+			case "UPDATE-PASSWORD":
+				pass := &VPassword{
+					Password:   req.FormValue("password"),
+					RePassword: req.FormValue("rePassword"),
+				}
+				if pass.ValidatePassword() == false {
+					switch req.FormValue("if_profile") {
+					case "0":
+						render(res, "edit-user.gohtml", ud)
+					case "1":
+						render(res, "profile.gohtml", ud)
+					}
+					return
+				}
+				db, err := config.GetMSSQLDB()
+				if err != nil {
+					ud.Errors["Server"] = "Could not connect to database."
+					switch req.FormValue("if_profile") {
+					case "0":
+						render(res, "edit-user.gohtml", ud)
+					case "1":
+						render(res, "profile.gohtml", ud)
+					}
+					return
+				}
+				userConnection := users.UserConnection{
+					Db: db,
+				}
+				if userConnection.UpdatePassword(pass.Password, req.FormValue("ID")) == false {
+					ud.Errors["Server"] = "Failed to update user password."
+					switch req.FormValue("if_profile") {
+					case "0":
+						render(res, "edit-user.gohtml", ud)
+					case "1":
+						render(res, "profile.gohtml", ud)
+					}
+					return
+				}
+
+				ud.Errors["Success"] = "Password Updated."
+				switch req.FormValue("if_profile") {
+				case "0":
+					render(res, "edit-user.gohtml", ud)
+				case "1":
+					render(res, "profile.gohtml", ud)
+				}
+				return
+			case "UPDATE-STATUS":
+				db, err := config.GetMSSQLDB()
+				if err != nil {
+					http.Redirect(res, req, "/admin/users", http.StatusServiceUnavailable)
+					return
+				}
+				userConnection := users.UserConnection{
+					Db: db,
+				}
+				if userConnection.UpdateStatus(req.FormValue("status"), req.FormValue("ID")) == false {
+					ud.Errors["Server"] = "Failed to update user password."
+					render(res, "user-manager.gohtml", ud)
+					return
+				}
+				ausers, err := userConnection.GetUsers(1, 10)
+				if err != nil {
+					http.Redirect(res, req, "/admin/users", http.StatusServiceUnavailable)
+					return
+				}
+
+				ud.Users = ausers
+
+				ud.Errors["Success"] = "Status Updated."
+				render(res, "user-manager.gohtml", ud)
 				return
 			case "VIEW":
 				user, err := userConnection.GetUserByID(req.FormValue("ID"))
@@ -367,12 +544,12 @@ func handlePost(res http.ResponseWriter, req *http.Request) {
 					return
 				}
 
-				newpath := filepath.Join(wd, "public", "images", "uploads", ud.ID)
+				newpath := filepath.Join(wd, "public", "images", "uploads", req.FormValue("ID"))
 				if _, err := os.Stat(newpath); os.IsNotExist(err) {
 					os.MkdirAll(newpath, os.ModePerm)
 				}
 
-				path := filepath.Join(wd, "public", "images", "uploads", ud.ID, fname)
+				path := filepath.Join(wd, "public", "images", "uploads", req.FormValue("ID"), fname)
 				nf, err := os.Create(path)
 				if err != nil {
 					http.Redirect(res, req, "/posts/edit", http.StatusServiceUnavailable)
@@ -383,7 +560,7 @@ func handlePost(res http.ResponseWriter, req *http.Request) {
 				mf.Seek(0, 0)
 				io.Copy(nf, mf)
 
-				postid, err := strconv.Atoi(req.FormValue("ID"))
+				postid, err := strconv.Atoi(req.FormValue("postid"))
 				if err != nil {
 					http.Redirect(res, req, "/posts/edit", http.StatusServiceUnavailable)
 					return
@@ -485,13 +662,13 @@ func createPost(res http.ResponseWriter, req *http.Request) {
 				return
 			}
 
-			newpath := filepath.Join(wd, "public", "images", "uploads", "1")
+			newpath := filepath.Join(wd, "public", "images", "uploads", req.FormValue("ID"))
 			fmt.Println(newpath, ud.User.ID)
 			if _, err := os.Stat(newpath); os.IsNotExist(err) {
 				os.MkdirAll(newpath, os.ModePerm)
 			}
 
-			path := filepath.Join(wd, "public", "images", "uploads", "1", fname)
+			path := filepath.Join(wd, "public", "images", "uploads", req.FormValue("ID"), fname)
 			nf, err := os.Create(path)
 			if err != nil {
 				fmt.Println("Here 3 ", fname)
@@ -756,6 +933,7 @@ func login(res http.ResponseWriter, req *http.Request) {
 			return
 		}
 		ud.User = user
+		ud.IfLoggedIn = true
 		vwd := userData{
 			User:       user,
 			IfLoggedIn: true,

@@ -116,6 +116,63 @@ func (reg *Register) ValidateRegister() bool {
 	return len(reg.Errors) == 0
 }
 
+// VUser is the structure used for the user form validation.
+type VUser struct {
+	Fname  string
+	Lname  string
+	Uname  string
+	Email  string
+	Errors map[string]string
+}
+
+// ValidateUser is used to validate the edit profile form.
+func (vuser *VUser) ValidateUser() bool {
+	vuser.Errors = make(map[string]string)
+
+	usn := regexp.MustCompile("[A-Za-z\\s]+")
+	matched := usn.Match([]byte(vuser.Fname))
+	if matched == false {
+		vuser.Errors["Fname"] = "Please enter a valid first name."
+	}
+	match := usn.Match([]byte(vuser.Lname))
+	if match == false {
+		vuser.Errors["Lname"] = "Please enter a valid last name."
+	}
+	mat := usn.Match([]byte(vuser.Uname))
+	if mat == false {
+		vuser.Errors["Uname"] = "Please enter a valid username."
+	}
+	re := regexp.MustCompile(".+@.+\\..+")
+	m := re.Match([]byte(vuser.Email))
+	if m == false {
+		vuser.Errors["Email"] = "Please enter a valid email address."
+	}
+	return len(vuser.Errors) == 0
+}
+
+// VPassword is the structure used for the user password form validation.
+type VPassword struct {
+	Password   string
+	RePassword string
+	Errors     map[string]string
+}
+
+// ValidatePassword is used to validate the register form.
+func (pass *VPassword) ValidatePassword() bool {
+	pass.Errors = make(map[string]string)
+
+	if strings.TrimSpace(pass.Password) == "" {
+		pass.Errors["Password"] = "Please enter a valid password."
+	}
+	if strings.TrimSpace(pass.RePassword) == "" {
+		pass.Errors["RePassword"] = "Please enter a valid password."
+	}
+	if pass.Password != pass.RePassword {
+		pass.Errors["RePassword"] = "Passwords do not match."
+	}
+	return len(pass.Errors) == 0
+}
+
 // ForgotPassword is the structure used for the forgot password form validation.
 type ForgotPassword struct {
 	Email  string

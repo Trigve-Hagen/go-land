@@ -15,13 +15,14 @@
                     {{template "sidebar-menu" .}}
                 </div>
                 <div class="content">
-                    <h1 class="page-title">
-                        Edit User
-                    </h1>
-                    <div class="posts-wrapper">
+                    <div class="users-wrapper">
+                        <h1 class="page-title">
+                            Update User
+                        </h1>
                         <form action="/users/handle" method="POST" enctype="multipart/form-data">
-                            <input type="hidden" name="method" value="UPDATE"/>
+                            <input type="hidden" name="method" value="UPDATE-USER"/>
                             <input type="hidden" name="ID" value="{{ .User.ID }}"/>
+                            <input type="hidden" name="if_profile" value="0"/>
                             {{ with .Errors.Success }}
                                 <p class="server-success">{{ . }}</p>
                             {{ end }}
@@ -69,6 +70,21 @@
                             {{ else }}
                                 <input type="email" name="email" id="email" class="form-item" value=""/>
                             {{ end }}
+                            <input type="submit" name="edit-user" id="edit-submit" value="Edit User"/>
+                        </form>
+                        <h1 class="page-title">
+                            Update Password
+                        </h1>
+                        <form action="/users/handle" method="POST">
+                            <input type="hidden" name="method" value="UPDATE-PASSWORD"/>
+                            <input type="hidden" name="ID" value="{{ .User.ID }}"/>
+                            <input type="hidden" name="if_profile" value="0"/>
+                            {{ with .Errors.Success }}
+                                <p class="server-success">{{ . }}</p>
+                            {{ end }}
+                            {{ with .Errors.Server }}
+                                <p class="server-error">{{ . }}</p>
+                            {{ end }}
                             {{ with .Errors.Password }}
                                 <p class="error">{{ . }}</p>
                             {{ end }}
@@ -79,7 +95,7 @@
                             {{ end }}
                             <label for="rePassword" class="form-label">Confirm Password</label>
                             <input type="password" name="rePassword" id="rePassword" class="form-item" value=""/>
-                            <input type="submit" name="edit-user" id="edit-submit" value="Edit User"/>
+                            <input type="submit" name="edit-password" id="edit-submit" value="Edit Password"/>
                         </form>
                     </div>
                 </div>

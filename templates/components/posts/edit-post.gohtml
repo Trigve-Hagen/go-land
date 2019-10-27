@@ -22,7 +22,8 @@
                     <div class="posts-wrapper">
                         <form action="/posts/handle" method="POST" enctype="multipart/form-data">
                             <input type="hidden" name="method" value="UPDATE"/>
-                            <input type="hidden" name="ID" value="{{ .ID }}"/>
+                            <input type="hidden" name="postid" value="{{ .ID }}"/>
+                            <input type="hidden" name="ID" value="{{ .User.ID }}"/>
                             {{ with .Errors.Success }}
                                 <p class="server-success">{{ . }}</p>
                             {{ end }}
