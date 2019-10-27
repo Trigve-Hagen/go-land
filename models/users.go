@@ -283,7 +283,7 @@ func (userConnection UserConnection) UpdatePassword(password string, ID string) 
 // UpdateStatus updates an existing users status.
 func (userConnection UserConnection) UpdateStatus(status string, ID string) bool {
 	const (
-		execTvp = "spUpdateStatus @Status, @ID"
+		execTvp = "spUpdateUserStatus @Status, @ID"
 	)
 	if status == "1" {
 		_, err := userConnection.Db.Exec(execTvp,

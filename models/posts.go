@@ -220,3 +220,29 @@ func (postConnection PostConnection) GetPostsStatus(cp int, pp int, s int) ([]en
 	}
 	return posts, nil
 }
+
+// UpdateStatus updates an existing users status.
+func (postConnection PostConnection) UpdateStatus(status string, ID string) bool {
+	const (
+		execTvp = "spUpdatePostStatus @Status, @ID"
+	)
+	if status == "1" {
+		_, err := postConnection.Db.Exec(execTvp,
+			sql.Named("Status", 1),
+			sql.Named("ID", ID),
+		)
+		if err != nil {
+			return false
+		}
+	} else {
+		_, err := postConnection.Db.Exec(execTvp,
+			sql.Named("Status", 0),
+			sql.Named("ID", ID),
+		)
+		if err != nil {
+			return false
+		}
+	}
+
+	return true
+}

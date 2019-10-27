@@ -62,8 +62,14 @@ func (userSession UserSession) CreateSession(us entities.Session) (entities.Sess
 	return us, nil
 }
 
-// CleanSessions checks the datetime and erases all session rows n days before.
-func (userSession UserSession) CleanSessions(us entities.User) bool {
+// DeleteSession erases a session.
+func (userSession UserSession) DeleteSession(us entities.User) bool {
+	fmt.Println(us)
+	return true
+}
+
+// DeleteOldSessions checks the datetime and erases all session rows n days before.
+func (userSession UserSession) DeleteOldSessions(us entities.User) bool {
 	fmt.Println(us)
 	return true
 }

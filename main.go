@@ -280,39 +280,42 @@ func handleUser(res http.ResponseWriter, req *http.Request) {
 					return
 				}
 
+				fname := ""
 				mf, fh, err := req.FormFile("imgfile")
-				if err != nil {
-					http.Redirect(res, req, "/users/edit", http.StatusServiceUnavailable)
-					return
+				if mf != nil {
+					if err != nil {
+						http.Redirect(res, req, "/users/edit", http.StatusServiceUnavailable)
+						return
+					}
+					defer mf.Close()
+
+					ext := strings.Split(fh.Filename, ".")[1]
+					h := sha1.New()
+					io.Copy(h, mf)
+					fname := fmt.Sprintf("%x", h.Sum(nil)) + "." + ext
+
+					wd, err := os.Getwd()
+					if err != nil {
+						http.Redirect(res, req, "/users/edit", http.StatusServiceUnavailable)
+						return
+					}
+
+					newpath := filepath.Join(wd, "public", "images", "uploads", req.FormValue("ID"))
+					if _, err := os.Stat(newpath); os.IsNotExist(err) {
+						os.MkdirAll(newpath, os.ModePerm)
+					}
+
+					path := filepath.Join(wd, "public", "images", "uploads", req.FormValue("ID"), fname)
+					nf, err := os.Create(path)
+					if err != nil {
+						http.Redirect(res, req, "/users/edit", http.StatusServiceUnavailable)
+						return
+					}
+					defer nf.Close()
+
+					mf.Seek(0, 0)
+					io.Copy(nf, mf)
 				}
-				defer mf.Close()
-
-				ext := strings.Split(fh.Filename, ".")[1]
-				h := sha1.New()
-				io.Copy(h, mf)
-				fname := fmt.Sprintf("%x", h.Sum(nil)) + "." + ext
-
-				wd, err := os.Getwd()
-				if err != nil {
-					http.Redirect(res, req, "/users/edit", http.StatusServiceUnavailable)
-					return
-				}
-
-				newpath := filepath.Join(wd, "public", "images", "uploads", req.FormValue("ID"))
-				if _, err := os.Stat(newpath); os.IsNotExist(err) {
-					os.MkdirAll(newpath, os.ModePerm)
-				}
-
-				path := filepath.Join(wd, "public", "images", "uploads", req.FormValue("ID"), fname)
-				nf, err := os.Create(path)
-				if err != nil {
-					http.Redirect(res, req, "/users/edit", http.StatusServiceUnavailable)
-					return
-				}
-				defer nf.Close()
-
-				mf.Seek(0, 0)
-				io.Copy(nf, mf)
 
 				userid, err := strconv.Atoi(req.FormValue("ID"))
 				if err != nil {
@@ -424,14 +427,6 @@ func handleUser(res http.ResponseWriter, req *http.Request) {
 				}
 				return
 			case "UPDATE-STATUS":
-				db, err := config.GetMSSQLDB()
-				if err != nil {
-					http.Redirect(res, req, "/admin/users", http.StatusServiceUnavailable)
-					return
-				}
-				userConnection := users.UserConnection{
-					Db: db,
-				}
 				if userConnection.UpdateStatus(req.FormValue("status"), req.FormValue("ID")) == false {
 					ud.Errors["Server"] = "Failed to update user password."
 					render(res, "user-manager.gohtml", ud)
@@ -526,39 +521,42 @@ func handlePost(res http.ResponseWriter, req *http.Request) {
 				render(res, "post-manager.gohtml", ud)
 				return
 			case "UPDATE":
+				fname := ""
 				mf, fh, err := req.FormFile("imgfile")
-				if err != nil {
-					http.Redirect(res, req, "/posts/edit", http.StatusServiceUnavailable)
-					return
+				if mf != nil {
+					if err != nil {
+						http.Redirect(res, req, "/posts/edit", http.StatusServiceUnavailable)
+						return
+					}
+					defer mf.Close()
+
+					ext := strings.Split(fh.Filename, ".")[1]
+					h := sha1.New()
+					io.Copy(h, mf)
+					fname := fmt.Sprintf("%x", h.Sum(nil)) + "." + ext
+
+					wd, err := os.Getwd()
+					if err != nil {
+						http.Redirect(res, req, "/posts/edit", http.StatusServiceUnavailable)
+						return
+					}
+
+					newpath := filepath.Join(wd, "public", "images", "uploads", req.FormValue("ID"))
+					if _, err := os.Stat(newpath); os.IsNotExist(err) {
+						os.MkdirAll(newpath, os.ModePerm)
+					}
+
+					path := filepath.Join(wd, "public", "images", "uploads", req.FormValue("ID"), fname)
+					nf, err := os.Create(path)
+					if err != nil {
+						http.Redirect(res, req, "/posts/edit", http.StatusServiceUnavailable)
+						return
+					}
+					defer nf.Close()
+
+					mf.Seek(0, 0)
+					io.Copy(nf, mf)
 				}
-				defer mf.Close()
-
-				ext := strings.Split(fh.Filename, ".")[1]
-				h := sha1.New()
-				io.Copy(h, mf)
-				fname := fmt.Sprintf("%x", h.Sum(nil)) + "." + ext
-
-				wd, err := os.Getwd()
-				if err != nil {
-					http.Redirect(res, req, "/posts/edit", http.StatusServiceUnavailable)
-					return
-				}
-
-				newpath := filepath.Join(wd, "public", "images", "uploads", req.FormValue("ID"))
-				if _, err := os.Stat(newpath); os.IsNotExist(err) {
-					os.MkdirAll(newpath, os.ModePerm)
-				}
-
-				path := filepath.Join(wd, "public", "images", "uploads", req.FormValue("ID"), fname)
-				nf, err := os.Create(path)
-				if err != nil {
-					http.Redirect(res, req, "/posts/edit", http.StatusServiceUnavailable)
-					return
-				}
-				defer nf.Close()
-
-				mf.Seek(0, 0)
-				io.Copy(nf, mf)
 
 				postid, err := strconv.Atoi(req.FormValue("postid"))
 				if err != nil {
@@ -591,6 +589,23 @@ func handlePost(res http.ResponseWriter, req *http.Request) {
 
 				ud.Errors["Success"] = "Post Updated."
 				render(res, "edit-post.gohtml", ud)
+				return
+			case "UPDATE-STATUS":
+				if postConnection.UpdateStatus(req.FormValue("status"), req.FormValue("ID")) == false {
+					ud.Errors["Server"] = "Failed to update post status."
+					render(res, "edit-post.gohtml", ud)
+					return
+				}
+				aposts, err := postConnection.GetPosts(1, 10)
+				if err != nil {
+					http.Redirect(res, req, "/admin/posts", http.StatusServiceUnavailable)
+					return
+				}
+
+				ud.Posts = aposts
+
+				ud.Errors["Success"] = "Status Updated."
+				render(res, "post-manager.gohtml", ud)
 				return
 			case "VIEW":
 				post, err := postConnection.GetPostByID(req.FormValue("ID"))
@@ -644,41 +659,44 @@ func createPost(res http.ResponseWriter, req *http.Request) {
 		}
 		ud.Post = post
 		if req.Method == http.MethodPost {
+			fname := ""
 			mf, fh, err := req.FormFile("imgfile")
-			if err != nil {
-				render(res, "create-post.gohtml", ud)
-				return
+			if mf != nil {
+				if err != nil {
+					render(res, "create-post.gohtml", ud)
+					return
+				}
+				defer mf.Close()
+
+				ext := strings.Split(fh.Filename, ".")[1]
+				h := sha1.New()
+				io.Copy(h, mf)
+				fname := fmt.Sprintf("%x", h.Sum(nil)) + "." + ext
+
+				wd, err := os.Getwd()
+				if err != nil {
+					render(res, "create-post.gohtml", ud)
+					return
+				}
+
+				newpath := filepath.Join(wd, "public", "images", "uploads", req.FormValue("ID"))
+				fmt.Println(newpath, ud.User.ID)
+				if _, err := os.Stat(newpath); os.IsNotExist(err) {
+					os.MkdirAll(newpath, os.ModePerm)
+				}
+
+				path := filepath.Join(wd, "public", "images", "uploads", req.FormValue("ID"), fname)
+				nf, err := os.Create(path)
+				if err != nil {
+					fmt.Println("Here 3 ", fname)
+					render(res, "create-post.gohtml", ud)
+					return
+				}
+				defer nf.Close()
+
+				mf.Seek(0, 0)
+				io.Copy(nf, mf)
 			}
-			defer mf.Close()
-
-			ext := strings.Split(fh.Filename, ".")[1]
-			h := sha1.New()
-			io.Copy(h, mf)
-			fname := fmt.Sprintf("%x", h.Sum(nil)) + "." + ext
-
-			wd, err := os.Getwd()
-			if err != nil {
-				render(res, "create-post.gohtml", ud)
-				return
-			}
-
-			newpath := filepath.Join(wd, "public", "images", "uploads", req.FormValue("ID"))
-			fmt.Println(newpath, ud.User.ID)
-			if _, err := os.Stat(newpath); os.IsNotExist(err) {
-				os.MkdirAll(newpath, os.ModePerm)
-			}
-
-			path := filepath.Join(wd, "public", "images", "uploads", req.FormValue("ID"), fname)
-			nf, err := os.Create(path)
-			if err != nil {
-				fmt.Println("Here 3 ", fname)
-				render(res, "create-post.gohtml", ud)
-				return
-			}
-			defer nf.Close()
-
-			mf.Seek(0, 0)
-			io.Copy(nf, mf)
 
 			vpost := &VPosts{
 				Title: req.FormValue("title"),
