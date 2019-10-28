@@ -26,8 +26,8 @@
                             <p class="error">{{ . }}</p>
                         {{ end }}
                         <label for="uname" class="form-label">Username</label>
-                        {{ if .Uname }}
-                        <input type="text" name="uname" id="uname" class="form-item" value="{{ .Uname }}"/>
+                        {{ if .User.Uname }}
+                        <input type="text" name="uname" id="uname" class="form-item" value="{{ .User.Uname }}"/>
                         {{ else }}
                         <input type="text" name="uname" id="uname" class="form-item" value=""/>
                         {{ end }}

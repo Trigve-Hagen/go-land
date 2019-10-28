@@ -10,6 +10,9 @@
             {{ with .Errors.Server }}
                 <p class="server-error">{{ . }}</p>
             {{ end }}
+            {{ with .Errors.Email }}
+                <p class="error">{{ . }}</p>
+            {{ end }}
             <label for="nemail" class="form-label">Email</label>
             <input type="email" name="nemail" id="nemail" class="form-item" value=""/>
             <input type="submit" name="submit-newsletter" id="edit-submit" value="Newsletter Sign Up"/>

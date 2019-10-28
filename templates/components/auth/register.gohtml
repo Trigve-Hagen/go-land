@@ -26,8 +26,8 @@
                             <p class="error">{{ . }}</p>
                         {{ end }}
                         <label for="fname" class="form-label">First Name</label>
-                        {{ if .Fname }}
-                            <input type="text" name="fname" id="fname" class="form-item" value="{{ .Fname }}"/>
+                        {{ if .User.Fname }}
+                            <input type="text" name="fname" id="fname" class="form-item" value="{{ .User.Fname }}"/>
                         {{ else }}
                             <input type="text" name="fname" id="fname" class="form-item" value=""/>
                         {{ end }}
@@ -35,8 +35,8 @@
                             <p class="error">{{ . }}</p>
                         {{ end }}
                         <label for="lname" class="form-label">Last Name</label>
-                        {{ if .Lname }}
-                            <input type="text" name="lname" id="lname" class="form-item" value="{{ .Lname }}"/>
+                        {{ if .User.Lname }}
+                            <input type="text" name="lname" id="lname" class="form-item" value="{{ .User.Lname }}"/>
                         {{ else }}
                             <input type="text" name="lname" id="lname" class="form-item" value=""/>
                         {{ end }}
@@ -44,8 +44,8 @@
                             <p class="error">{{ . }}</p>
                         {{ end }}
                         <label for="uname" class="form-label">Username</label>
-                        {{ if .Uname }}
-                            <input type="text" name="uname" id="uname" class="form-item" value="{{ .Uname }}"/>
+                        {{ if .User.Uname }}
+                            <input type="text" name="uname" id="uname" class="form-item" value="{{ .User.Uname }}"/>
                         {{ else }}
                             <input type="text" name="uname" id="uname" class="form-item" value=""/>
                         {{ end }}
@@ -53,8 +53,8 @@
                             <p class="error">{{ . }}</p>
                         {{ end }}
                         <label for="email" class="form-label">Email</label>
-                        {{ if .Email }}
-                            <input type="email" name="email" id="email" class="form-item" value="{{ .Email }}"/>
+                        {{ if .User.Email }}
+                            <input type="email" name="email" id="email" class="form-item" value="{{ .User.Email }}"/>
                         {{ else }}
                             <input type="email" name="email" id="email" class="form-item" value=""/>
                         {{ end }}
@@ -62,8 +62,8 @@
                             <p class="error">{{ . }}</p>
                         {{ end }}
                         <label for="password" class="form-label">Password</label>
-                        {{ if .Password }}
-                            <input type="password" name="password" id="password" class="form-item" value="{{ .Password }}"/>
+                        {{ if .User.Password }}
+                            <input type="password" name="password" id="password" class="form-item" value="{{ .User.Password }}"/>
                         {{ else }}
                             <input type="password" name="password" id="password" class="form-item" value=""/>
                         {{ end }}

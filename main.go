@@ -33,16 +33,8 @@ type message struct {
 
 type userData struct {
 	IfLoggedIn bool
-	ID         string
-	UUID       string
-	Fname      string
-	Lname      string
-	Uname      string
-	Email      string
 	NEmail     string
-	Password   string
 	RePassword string
-	Userrole   int8
 	Message    message
 	User       entities.User
 	Users      []entities.User
@@ -144,9 +136,8 @@ func createUser(res http.ResponseWriter, req *http.Request) {
 			Userrole: 1,
 		}
 		ud.User = user
-		ud.RePassword = ""
 		if req.Method == http.MethodPost {
-			vreg := &Register{
+			vreg := &VCreateUser{
 				Fname:      req.FormValue("fname"),
 				Lname:      req.FormValue("lname"),
 				Uname:      req.FormValue("uname"),
@@ -156,8 +147,9 @@ func createUser(res http.ResponseWriter, req *http.Request) {
 				RePassword: req.FormValue("rePassword"),
 			}
 			if vreg.Password == vreg.RePassword {
-				if vreg.ValidateRegister() == false {
-					render(res, "create-user.gohtml", ud)
+				if vreg.ValidateCreateUser() == false {
+					ud.Errors = vreg.Errors
+					render(res, "create-user.gohtml", vreg)
 					return
 				}
 
@@ -275,7 +267,8 @@ func handleUser(res http.ResponseWriter, req *http.Request) {
 					Email: req.FormValue("email"),
 				}
 				if vreg.ValidateUser() == false {
-					render(res, "edit-user.gohtml", vreg)
+					ud.Errors = vreg.Errors
+					render(res, "edit-user.gohtml", ud)
 					return
 				}
 
@@ -397,6 +390,7 @@ func handleUser(res http.ResponseWriter, req *http.Request) {
 					RePassword: req.FormValue("rePassword"),
 				}
 				if pass.ValidatePassword() == false {
+					ud.Errors = pass.Errors
 					switch req.FormValue("if_profile") {
 					case "0":
 						render(res, "edit-user.gohtml", ud)
@@ -567,13 +561,14 @@ func handlePost(res http.ResponseWriter, req *http.Request) {
 					Body:  req.FormValue("body"),
 				}
 				if vpost.ValidatePost() == false {
+					ud.Errors = vpost.Errors
 					render(res, "edit-post.gohtml", ud)
 					return
 				}
 				if fname == "" {
 					apost := entities.Post{
 						ID:       postid,
-						UserUUID: ud.UUID,
+						UserUUID: ud.User.UUID,
 						Title:    vpost.Title,
 						Body:     vpost.Body,
 					}
@@ -586,7 +581,7 @@ func handlePost(res http.ResponseWriter, req *http.Request) {
 				} else {
 					apost := entities.Post{
 						ID:       postid,
-						UserUUID: ud.UUID,
+						UserUUID: ud.User.UUID,
 						Image:    fname,
 						Title:    vpost.Title,
 						Body:     vpost.Body,
@@ -714,12 +709,13 @@ func createPost(res http.ResponseWriter, req *http.Request) {
 				Body:  req.FormValue("body"),
 			}
 			if vpost.ValidatePost() == false {
+				ud.Errors = vpost.Errors
 				render(res, "create-post.gohtml", ud)
 				return
 			}
 
 			apost := entities.Post{
-				UserUUID: ud.UUID,
+				UserUUID: ud.User.UUID,
 				Image:    fname,
 				Title:    vpost.Title,
 				Body:     vpost.Body,
@@ -804,6 +800,7 @@ func index(res http.ResponseWriter, req *http.Request) {
 			NEmail: ud.NEmail,
 		}
 		if news.ValidateNewsletter() == false {
+			ud.Errors = news.Errors
 			render(res, "index.gohtml", ud)
 			return
 		}
@@ -905,12 +902,13 @@ func login(res http.ResponseWriter, req *http.Request) {
 			Password: req.FormValue("password"),
 		}
 		if lgn.ValidateLogin() == false {
-			render(res, "login.gohtml", lgn)
+			ud.Errors = lgn.Errors
+			render(res, "login.gohtml", ud)
 			return
 		}
 
-		ud.Uname = lgn.Uname
-		ud.Password = lgn.Password
+		ud.User.Uname = lgn.Uname
+		ud.User.Password = lgn.Password
 		db, err := config.GetMSSQLDB()
 		if err != nil {
 			ud.Errors["Server"] = "Could not connect to database."
@@ -920,13 +918,13 @@ func login(res http.ResponseWriter, req *http.Request) {
 		userConnection := users.UserConnection{
 			Db: db,
 		}
-		user, err := userConnection.CheckLoginForm(ud.Uname)
+		user, err := userConnection.CheckLoginForm(ud.User.Uname)
 		if err != nil {
 			ud.Errors["Server"] = "Failed to validate user."
 			render(res, "login.gohtml", ud)
 			return
 		}
-		if err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(ud.Password)); err != nil {
+		if err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(ud.User.Password)); err != nil {
 			ud.Errors["Server"] = "Failed to validate user."
 			render(res, "login.gohtml", ud)
 			return
@@ -990,7 +988,8 @@ func register(res http.ResponseWriter, req *http.Request) {
 			RePassword: req.FormValue("rePassword"),
 		}
 		if vreg.ValidateRegister() == false {
-			render(res, "register.gohtml", vreg)
+			ud.Errors = vreg.Errors
+			render(res, "register.gohtml", ud)
 			return
 		}
 

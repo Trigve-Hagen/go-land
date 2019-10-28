@@ -68,14 +68,14 @@ img.user-image {
     
     .page-container {
         flex-grow: 1;
-        align-items: center;
+        align-items: flex-start;
         width: 100%;
         margin: 0 auto;
     }
 
     .page-1200-container {
         flex-grow: 1;
-        align-items: center;
+        align-items: flex-start;
         max-width: 100%;
         width: 100%;
         margin: 0 auto;
@@ -173,7 +173,6 @@ img.user-image {
 @media screen and (min-width: 1000px) {
     .page-container {
         flex-grow: 1;
-        align-items: center;
         max-width: 960px;
         width: 100%;
         margin: 0 auto;
@@ -181,7 +180,6 @@ img.user-image {
 
     .page-1200-front-container {
         flex-grow: 1;
-        align-items: center;
         max-width: 1200px;
         width: 100%;
         margin: 0 auto;
@@ -193,7 +191,6 @@ img.user-image {
         justify-content: space-between;
         align-items: stretch;
         flex-grow: 1;
-        align-items: center;
         max-width: 1200px;
         width: 100%;
         margin: 0 auto;

@@ -150,6 +150,43 @@ func (vuser *VUser) ValidateUser() bool {
 	return len(vuser.Errors) == 0
 }
 
+// VCreateUser is the structure used for the create user form validation.
+type VCreateUser struct {
+	Fname      string
+	Lname      string
+	Uname      string
+	Email      string
+	Password   string
+	RePassword string
+	Userrole   string
+	Errors     map[string]string
+}
+
+// ValidateCreateUser is used to validate the create user form.
+func (vuser *VCreateUser) ValidateCreateUser() bool {
+	vuser.Errors = make(map[string]string)
+
+	usn := regexp.MustCompile("[A-Za-z\\s]+")
+	matched := usn.Match([]byte(vuser.Fname))
+	if matched == false {
+		vuser.Errors["Fname"] = "Please enter a valid first name."
+	}
+	match := usn.Match([]byte(vuser.Lname))
+	if match == false {
+		vuser.Errors["Lname"] = "Please enter a valid last name."
+	}
+	mat := usn.Match([]byte(vuser.Uname))
+	if mat == false {
+		vuser.Errors["Uname"] = "Please enter a valid username."
+	}
+	re := regexp.MustCompile(".+@.+\\..+")
+	m := re.Match([]byte(vuser.Email))
+	if m == false {
+		vuser.Errors["Email"] = "Please enter a valid email address."
+	}
+	return len(vuser.Errors) == 0
+}
+
 // VPassword is the structure used for the user password form validation.
 type VPassword struct {
 	Password   string
