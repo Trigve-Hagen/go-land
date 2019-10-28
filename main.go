@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"math"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -26,6 +27,9 @@ import (
 	"github.com/google/uuid"
 )
 
+//PERPAGE is the number of pagination items per page
+const PERPAGE = 10
+
 type message struct {
 	Name    string
 	Email   string
@@ -34,15 +38,17 @@ type message struct {
 }
 
 type userData struct {
-	IfLoggedIn bool
-	NEmail     string
-	RePassword string
-	Message    message
-	User       entities.User
-	Users      []entities.User
-	Post       entities.Post
-	Posts      []entities.Post
-	Errors     map[string]string
+	IfLoggedIn  bool
+	NEmail      string
+	RePassword  string
+	CurrentPage int
+	Message     message
+	User        entities.User
+	Users       []entities.User
+	Post        entities.Post
+	Posts       []entities.Post
+	Pagination  []int
+	Errors      map[string]string
 }
 
 type sessionData struct {
@@ -111,7 +117,30 @@ func userManager(res http.ResponseWriter, req *http.Request) {
 		userConnection := users.UserConnection{
 			Db: db,
 		}
-		ausers, err := userConnection.GetUsers(1, 10)
+
+		userCount, err := userConnection.GetTotalUsers()
+		if err != nil {
+			fmt.Println(err)
+			ud.Errors["Server"] = "Failed to retreive user count."
+			render(res, "user-manager.gohtml", ud)
+			return
+		}
+		var r float64 = float64(userCount) / float64(PERPAGE)
+		pages := int(math.Ceil(r))
+		a := makeRange(1, pages)
+		ud.Pagination = a
+		ud.CurrentPage = 1
+
+		if req.FormValue("method") == "PAGINATE" {
+			currentpage, err := strconv.Atoi(req.FormValue("currentpage"))
+			if err != nil {
+				http.Redirect(res, req, "/admin/users", http.StatusServiceUnavailable)
+				return
+			}
+			ud.CurrentPage = currentpage
+		}
+
+		ausers, err := userConnection.GetUsers(ud.CurrentPage, PERPAGE)
 		if err != nil {
 			ud.Errors["Server"] = "Failed to retreive users."
 			render(res, "user-manager.gohtml", ud)
@@ -275,41 +304,16 @@ func handleUser(res http.ResponseWriter, req *http.Request) {
 					return
 				}
 
-				fname := ""
-				mf, fh, err := req.FormFile("imgfile")
-				if fh != nil {
-					if err != nil {
-						http.Redirect(res, req, "/users/edit", http.StatusServiceUnavailable)
-						return
+				fname, err := processImage(req)
+				if err != nil && err.Error() != "no file" {
+					ud.Errors["Server"] = err.Error()
+					switch req.FormValue("if_profile") {
+					case "0":
+						render(res, "edit-user.gohtml", ud)
+					case "1":
+						render(res, "profile.gohtml", ud)
 					}
-					defer mf.Close()
-
-					ext := strings.Split(fh.Filename, ".")[1]
-					h := sha1.New()
-					io.Copy(h, mf)
-					fname = fmt.Sprintf("%x", h.Sum(nil)) + "." + ext
-
-					wd, err := os.Getwd()
-					if err != nil {
-						http.Redirect(res, req, "/users/edit", http.StatusServiceUnavailable)
-						return
-					}
-
-					newpath := filepath.Join(wd, "public", "images", "uploads", req.FormValue("ID"))
-					if _, err := os.Stat(newpath); os.IsNotExist(err) {
-						os.MkdirAll(newpath, os.ModePerm)
-					}
-
-					path := filepath.Join(wd, "public", "images", "uploads", req.FormValue("ID"), fname)
-					nf, err := os.Create(path)
-					if err != nil {
-						http.Redirect(res, req, "/users/edit", http.StatusServiceUnavailable)
-						return
-					}
-					defer nf.Close()
-
-					mf.Seek(0, 0)
-					io.Copy(nf, mf)
+					return
 				}
 
 				userid, err := strconv.Atoi(req.FormValue("ID"))
@@ -469,7 +473,30 @@ func postManager(res http.ResponseWriter, req *http.Request) {
 		postConnection := posts.PostConnection{
 			Db: db,
 		}
-		aposts, err := postConnection.GetPosts(1, 10)
+
+		postCount, err := postConnection.GetTotalPosts()
+		if err != nil {
+			fmt.Println(err)
+			ud.Errors["Server"] = "Failed to retreive post count."
+			render(res, "post-manager.gohtml", ud)
+			return
+		}
+		var r float64 = float64(postCount) / float64(PERPAGE)
+		pages := int(math.Ceil(r))
+		a := makeRange(1, pages)
+		ud.Pagination = a
+		ud.CurrentPage = 1
+
+		if req.FormValue("method") == "PAGINATE" {
+			currentpage, err := strconv.Atoi(req.FormValue("currentpage"))
+			if err != nil {
+				http.Redirect(res, req, "/admin/posts", http.StatusServiceUnavailable)
+				return
+			}
+			ud.CurrentPage = currentpage
+		}
+
+		aposts, err := postConnection.GetPosts(ud.CurrentPage, PERPAGE)
 		if err != nil {
 			ud.Errors["Server"] = "Failed to retreive posts."
 			render(res, "post-manager.gohtml", ud)
@@ -517,42 +544,13 @@ func handlePost(res http.ResponseWriter, req *http.Request) {
 				render(res, "post-manager.gohtml", ud)
 				return
 			case "UPDATE":
-				fname := ""
-				mf, fh, err := req.FormFile("imgfile")
-				if fh != nil {
-					if err != nil {
-						http.Redirect(res, req, "/posts/edit", http.StatusServiceUnavailable)
-						return
-					}
-					defer mf.Close()
-
-					ext := strings.Split(fh.Filename, ".")[1]
-					h := sha1.New()
-					io.Copy(h, mf)
-					fname = fmt.Sprintf("%x", h.Sum(nil)) + "." + ext
-
-					wd, err := os.Getwd()
-					if err != nil {
-						http.Redirect(res, req, "/posts/edit", http.StatusServiceUnavailable)
-						return
-					}
-
-					newpath := filepath.Join(wd, "public", "images", "uploads", req.FormValue("ID"))
-					if _, err := os.Stat(newpath); os.IsNotExist(err) {
-						os.MkdirAll(newpath, os.ModePerm)
-					}
-
-					path := filepath.Join(wd, "public", "images", "uploads", req.FormValue("ID"), fname)
-					nf, err := os.Create(path)
-					if err != nil {
-						http.Redirect(res, req, "/posts/edit", http.StatusServiceUnavailable)
-						return
-					}
-					defer nf.Close()
-
-					mf.Seek(0, 0)
-					io.Copy(nf, mf)
+				fname, err := processImage(req)
+				if err != nil && err.Error() != "no file" {
+					ud.Errors["Server"] = err.Error()
+					render(res, "edit-post.gohtml", ud)
+					return
 				}
+
 				postid, err := strconv.Atoi(req.FormValue("postid"))
 				if err != nil {
 					http.Redirect(res, req, "/posts/edit", http.StatusServiceUnavailable)
@@ -655,49 +653,6 @@ func editPost(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 	render(res, "index.gohtml", ud)
-}
-
-func processImage(req *http.Request) (string, error) {
-	fname := ""
-	mf, fh, err := req.FormFile("imgfile")
-	if fh != nil {
-		if err != nil {
-			return fname, err
-		}
-		defer mf.Close()
-
-		ext := strings.Split(fh.Filename, ".")[1]
-		//if ext != "jpg" || ext != "jpeg" || ext != "png" || ext != "gif" {
-
-		//return fname,
-		//}
-		h := sha1.New()
-		io.Copy(h, mf)
-		fname = fmt.Sprintf("%x", h.Sum(nil)) + "." + ext
-
-		wd, err := os.Getwd()
-		if err != nil {
-			return fname, err
-		}
-
-		newpath := filepath.Join(wd, "public", "images", "uploads", req.FormValue("ID"))
-		if _, err := os.Stat(newpath); os.IsNotExist(err) {
-			os.MkdirAll(newpath, os.ModePerm)
-		}
-
-		path := filepath.Join(wd, "public", "images", "uploads", req.FormValue("ID"), fname)
-		nf, err := os.Create(path)
-		if err != nil {
-			return fname, err
-		}
-		defer nf.Close()
-
-		mf.Seek(0, 0)
-		io.Copy(nf, mf)
-
-		return fname, nil
-	}
-	return fname, errors.New("no file")
 }
 
 func createPost(res http.ResponseWriter, req *http.Request) {
@@ -1149,6 +1104,57 @@ func ifLoggedIn(req *http.Request) userData {
 	}
 	ud := viewData[c.Value]
 	return ud
+}
+
+func makeRange(min, max int) []int {
+	a := make([]int, max-min+1)
+	for i := range a {
+		a[i] = min + i
+	}
+	return a
+}
+
+func processImage(req *http.Request) (string, error) {
+	fname := ""
+	mf, fh, err := req.FormFile("imgfile")
+	if fh != nil {
+		if err != nil {
+			return fname, err
+		}
+		defer mf.Close()
+
+		ext := strings.Split(fh.Filename, ".")[1]
+		//if ext != "jpg" || ext != "jpeg" || ext != "png" || ext != "gif" {
+
+		//return fname,
+		//}
+		h := sha1.New()
+		io.Copy(h, mf)
+		fname = fmt.Sprintf("%x", h.Sum(nil)) + "." + ext
+
+		wd, err := os.Getwd()
+		if err != nil {
+			return fname, err
+		}
+
+		newpath := filepath.Join(wd, "public", "images", "uploads", req.FormValue("ID"))
+		if _, err := os.Stat(newpath); os.IsNotExist(err) {
+			os.MkdirAll(newpath, os.ModePerm)
+		}
+
+		path := filepath.Join(wd, "public", "images", "uploads", req.FormValue("ID"), fname)
+		nf, err := os.Create(path)
+		if err != nil {
+			return fname, err
+		}
+		defer nf.Close()
+
+		mf.Seek(0, 0)
+		io.Copy(nf, mf)
+
+		return fname, nil
+	}
+	return fname, errors.New("no file")
 }
 
 func validateImage(image string, id string) bool {

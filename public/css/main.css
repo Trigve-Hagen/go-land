@@ -206,6 +206,11 @@ img.user-image {
         margin-left:20px;
     }
 
+    .pagination {
+        display: flex;
+        flex-direction: row;
+    }
+
     .posts-wrapper {
         display: flex;
         flex-direction: row;

@@ -85,6 +85,17 @@
                             </tbody>
                         </table>
                     </div>
+                    {{ if .Pagination }}
+                        <div class="pagination">
+                            {{ range .Pagination }}
+                                <form action="/admin/posts" class="post-form" method="POST">
+                                    <input type="hidden" name="method" value="PAGINATE"/>
+                                    <input type="hidden" name="currentpage" value="{{ . }}"/>
+                                    <input type="submit" name="paginate-submit" class="post-buttons" value="{{ . }}"/>
+                                </form>
+                            {{ end }}
+                        </div>
+                    {{ end }}
                 </div>
             </div>
         </div>

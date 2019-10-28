@@ -63,14 +63,14 @@
                                                         <input type="hidden" name="ID" value="{{ .ID }}"/>
                                                         <select name="status" class="status-select">
                                                             {{ if eq .Status 0 }}
-                                                                <option value="0" selected="selected">0</option>
+                                                                <option value="0" selected="selected">Off</option>
                                                             {{ else }}
-                                                                <option value="0">0</option>
+                                                                <option value="0">Off</option>
                                                             {{ end }}
                                                             {{ if eq .Status 1 }}
-                                                                <option value="1" selected="selected">1</option>
+                                                                <option value="1" selected="selected">On</option>
                                                             {{ else }}
-                                                                <option value="1">1</option>
+                                                                <option value="1">On</option>
                                                             {{ end }}
                                                         </select>
                                                         <input type="submit" name="edit-submit" class="post-buttons" value="Status"/>
@@ -87,6 +87,17 @@
                             </tbody>
                         </table>
                     </div>
+                    {{ if .Pagination }}
+                        <div class="pagination">
+                            {{ range .Pagination }}
+                                <form action="/admin/users" class="post-form" method="POST">
+                                    <input type="hidden" name="method" value="PAGINATE"/>
+                                    <input type="hidden" name="currentpage" value="{{ . }}"/>
+                                    <input type="submit" name="paginate-submit" class="post-buttons" value="{{ . }}"/>
+                                </form>
+                            {{ end }}
+                        </div>
+                    {{ end }}
                 </div>
             </div>
         </div>

@@ -15,6 +15,26 @@ type UserConnection struct {
 	Db *sql.DB
 }
 
+// GetTotalUsers gets all users for admin.
+func (userConnection UserConnection) GetTotalUsers() (int, error) {
+	const (
+		execTvp = "spGetTotalUsers"
+	)
+	rows, err := userConnection.Db.Query(execTvp)
+	if err != nil {
+		return 0, err
+	}
+
+	var count int
+	for rows.Next() {
+		err := rows.Scan(&count)
+		if err != nil {
+			return 0, err
+		}
+	}
+	return count, nil
+}
+
 // GetUsers gets a list of users from the database.
 func (userConnection UserConnection) GetUsers(cp int, pp int) ([]entities.User, error) {
 	const (
