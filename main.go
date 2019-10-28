@@ -2,12 +2,14 @@ package main
 
 import (
 	"crypto/sha1"
+	"errors"
 	"fmt"
 	"html/template"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -51,6 +53,7 @@ type sessionData struct {
 
 var tpl *template.Template
 var viewData = map[string]userData{}
+var dataErrors = map[string]string{}
 var messageData = map[string]message{}
 
 func init() {
@@ -149,7 +152,7 @@ func createUser(res http.ResponseWriter, req *http.Request) {
 			if vreg.Password == vreg.RePassword {
 				if vreg.ValidateCreateUser() == false {
 					ud.Errors = vreg.Errors
-					render(res, "create-user.gohtml", vreg)
+					render(res, "create-user.gohtml", ud)
 					return
 				}
 
@@ -654,6 +657,49 @@ func editPost(res http.ResponseWriter, req *http.Request) {
 	render(res, "index.gohtml", ud)
 }
 
+func processImage(req *http.Request) (string, error) {
+	fname := ""
+	mf, fh, err := req.FormFile("imgfile")
+	if fh != nil {
+		if err != nil {
+			return fname, err
+		}
+		defer mf.Close()
+
+		ext := strings.Split(fh.Filename, ".")[1]
+		//if ext != "jpg" || ext != "jpeg" || ext != "png" || ext != "gif" {
+
+		//return fname,
+		//}
+		h := sha1.New()
+		io.Copy(h, mf)
+		fname = fmt.Sprintf("%x", h.Sum(nil)) + "." + ext
+
+		wd, err := os.Getwd()
+		if err != nil {
+			return fname, err
+		}
+
+		newpath := filepath.Join(wd, "public", "images", "uploads", req.FormValue("ID"))
+		if _, err := os.Stat(newpath); os.IsNotExist(err) {
+			os.MkdirAll(newpath, os.ModePerm)
+		}
+
+		path := filepath.Join(wd, "public", "images", "uploads", req.FormValue("ID"), fname)
+		nf, err := os.Create(path)
+		if err != nil {
+			return fname, err
+		}
+		defer nf.Close()
+
+		mf.Seek(0, 0)
+		io.Copy(nf, mf)
+
+		return fname, nil
+	}
+	return fname, errors.New("no file")
+}
+
 func createPost(res http.ResponseWriter, req *http.Request) {
 	ud := ifLoggedIn(req)
 	ud.Errors = make(map[string]string)
@@ -666,42 +712,16 @@ func createPost(res http.ResponseWriter, req *http.Request) {
 		}
 		ud.Post = post
 		if req.Method == http.MethodPost {
-			fname := ""
-			mf, fh, err := req.FormFile("imgfile")
-			if fh != nil {
-				if err != nil {
-					render(res, "create-post.gohtml", ud)
-					return
-				}
-				defer mf.Close()
+			if req.FormValue("method") == "CREATE" {
+				render(res, "create-post.gohtml", ud)
+				return
+			}
 
-				ext := strings.Split(fh.Filename, ".")[1]
-				h := sha1.New()
-				io.Copy(h, mf)
-				fname = fmt.Sprintf("%x", h.Sum(nil)) + "." + ext
-
-				wd, err := os.Getwd()
-				if err != nil {
-					render(res, "create-post.gohtml", ud)
-					return
-				}
-
-				newpath := filepath.Join(wd, "public", "images", "uploads", req.FormValue("ID"))
-				fmt.Println(newpath, ud.User.ID)
-				if _, err := os.Stat(newpath); os.IsNotExist(err) {
-					os.MkdirAll(newpath, os.ModePerm)
-				}
-
-				path := filepath.Join(wd, "public", "images", "uploads", req.FormValue("ID"), fname)
-				nf, err := os.Create(path)
-				if err != nil {
-					render(res, "create-post.gohtml", ud)
-					return
-				}
-				defer nf.Close()
-
-				mf.Seek(0, 0)
-				io.Copy(nf, mf)
+			fname, err := processImage(req)
+			if err != nil && err.Error() != "no file" {
+				ud.Errors["Server"] = err.Error()
+				render(res, "create-post.gohtml", ud)
+				return
 			}
 
 			vpost := &VPosts{
@@ -714,13 +734,6 @@ func createPost(res http.ResponseWriter, req *http.Request) {
 				return
 			}
 
-			apost := entities.Post{
-				UserUUID: ud.User.UUID,
-				Image:    fname,
-				Title:    vpost.Title,
-				Body:     vpost.Body,
-			}
-
 			db, err := config.GetMSSQLDB()
 			if err != nil {
 				ud.Errors["Server"] = "Could not connect to database."
@@ -730,13 +743,19 @@ func createPost(res http.ResponseWriter, req *http.Request) {
 			postConnection := posts.PostConnection{
 				Db: db,
 			}
+			apost := entities.Post{
+				UserUUID: ud.User.UUID,
+				Image:    fname,
+				Title:    vpost.Title,
+				Body:     vpost.Body,
+			}
 			if postConnection.CreatePost(apost) == false {
 				ud.Errors["Server"] = "Failed to create entry."
 				render(res, "create-post.gohtml", ud)
 				return
 			}
 
-			http.Redirect(res, req, "/admin/posts", http.StatusServiceUnavailable)
+			http.Redirect(res, req, "/admin/posts", http.StatusPermanentRedirect)
 			return
 		}
 		render(res, "create-post.gohtml", ud)
@@ -1130,6 +1149,50 @@ func ifLoggedIn(req *http.Request) userData {
 	}
 	ud := viewData[c.Value]
 	return ud
+}
+
+func validateImage(image string, id string) bool {
+	runtime.GOMAXPROCS(runtime.NumCPU())
+
+	// open the uploaded file
+	file, err := os.Open("./public/uploads/" + id + "/" + image)
+
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	buff := make([]byte, 512) // why 512 bytes ? see http://golang.org/pkg/net/http/#DetectContentType
+	_, err = file.Read(buff)
+
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	filetype := http.DetectContentType(buff)
+
+	fmt.Println(filetype)
+
+	switch filetype {
+	case "image/jpeg", "image/jpg":
+		fmt.Println(filetype)
+		return true
+
+	case "image/gif":
+		fmt.Println(filetype)
+		return true
+
+	case "image/png":
+		fmt.Println(filetype)
+		return true
+
+	//case "application/pdf": // not image, but application !
+	//fmt.Println(filetype)
+	default:
+		fmt.Println("unknown file type uploaded")
+		return false
+	}
 }
 
 func render(res http.ResponseWriter, filename string, data interface{}) {

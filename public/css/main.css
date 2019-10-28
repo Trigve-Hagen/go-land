@@ -223,6 +223,11 @@ img.user-image {
         padding-top: 30px;
     }
 
+    .post-content-full {
+        width: 100%;
+        margin:0 auto;
+    }
+
     .post-text {
         font-weight: 300;
         line-height: 1.5rem;

@@ -16,6 +16,7 @@
                 </div>
                 <div class="content">
                     <div class="posts-wrapper">
+                    {{ if .Post.Image }}
                         <div class="post-sidebar">
                             <div class="user-wrapper">
                                 <img src="../public/images/uploads/{{ .User.ID }}/{{ .Post.Image }}" class="user-image" alt="Ibeahero Logo"/>
@@ -29,6 +30,16 @@
                             </h1>
                             <p class="post-text">{{ .Post.Body }}</p>
                         </div>
+                    {{ else }}
+                        <div class="post-content-full">
+                            <h1 class="page-title">
+                                {{ if .Post.Title }}
+                                    {{ .Post.Title }}
+                                {{ end }}
+                            </h1>
+                            <p class="post-text">{{ .Post.Body }}</p>
+                        </div>
+                    {{ end }}
                     </h1>
                     </div>
                 </div>
