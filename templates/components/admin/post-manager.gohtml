@@ -85,15 +85,54 @@
                             </tbody>
                         </table>
                     </div>
-                    {{ if .Pagination }}
+                    {{ if .Pagination.Pagination }}
+                        {{ $pertenpage := .Pagination.PerTenPage }}
+                        {{ $currentpage := .Pagination.CurrentPage }}
+                        {{ $currenttenpage := .Pagination.CurrentTenPage }}
                         <div class="pagination">
-                            {{ range .Pagination }}
+                            <form action="/admin/posts" class="post-form" method="POST">
+                                <input type="hidden" name="method" value="PAGINATE"/>
+                                <input type="hidden" name="currentpage" value="1"/>
+                                <input type="hidden" name="tenpage" value="{{ $currenttenpage }}"/>
+                                <input type="submit" name="paginate-submit" class="post-buttons" value="First Page"/>
+                            </form>
+                            {{ if ne .Pagination.RightTen 0 }}
                                 <form action="/admin/posts" class="post-form" method="POST">
-                                    <input type="hidden" name="method" value="PAGINATE"/>
-                                    <input type="hidden" name="currentpage" value="{{ . }}"/>
-                                    <input type="submit" name="paginate-submit" class="post-buttons" value="{{ . }}"/>
+                                    <input type="hidden" name="method" value="TENPAGE"/>
+                                    <input type="hidden" name="tenpage" value="{{ .Pagination.RightTen }}"/>
+                                    <input type="submit" name="paginate-submit" class="post-buttons" value="Last {{ $pertenpage }}"/>
                                 </form>
                             {{ end }}
+                            {{ range .Pagination.Pagination }}
+                                {{ if eq $currentpage . }}
+                                    <form action="/admin/posts" class="post-form" method="POST">
+                                        <input type="hidden" name="method" value="PAGINATE"/>
+                                        <input type="hidden" name="currentpage" value="{{ . }}"/>
+                                        <input type="hidden" name="tenpage" value="{{ $currenttenpage }}"/>
+                                        <input type="submit" name="paginate-submit" class="post-buttons active" value="{{ . }}"/>
+                                    </form>
+                                {{ else }}
+                                    <form action="/admin/posts" class="post-form" method="POST">
+                                        <input type="hidden" name="method" value="PAGINATE"/>
+                                        <input type="hidden" name="currentpage" value="{{ . }}"/>
+                                        <input type="hidden" name="tenpage" value="{{ $currenttenpage }}"/>
+                                        <input type="submit" name="paginate-submit" class="post-buttons" value="{{ . }}"/>
+                                    </form>
+                                {{ end }}
+                            {{ end }}
+                            {{ if ge .Pagination.LastTenPage .Pagination.LeftTen }}
+                                <form action="/admin/posts" class="post-form" method="POST">
+                                    <input type="hidden" name="method" value="TENPAGE"/>
+                                    <input type="hidden" name="tenpage" value="{{ .Pagination.LeftTen }}"/>
+                                    <input type="submit" name="paginate-submit" class="post-buttons" value="Next {{ $pertenpage }}"/>
+                                </form>
+                            {{ end }}
+                            <form action="/admin/posts" class="post-form" method="POST">
+                                <input type="hidden" name="method" value="PAGINATE"/>
+                                <input type="hidden" name="currentpage" value="{{ .Pagination.LastPage }}"/>
+                                <input type="hidden" name="tenpage" value="{{ $currenttenpage }}"/>
+                                <input type="submit" name="paginate-submit" class="post-buttons" value="Last Page"/>
+                            </form>
                         </div>
                     {{ end }}
                 </div>

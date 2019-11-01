@@ -27,8 +27,11 @@ import (
 	"github.com/google/uuid"
 )
 
-//PERPAGE is the number of pagination items per page
-const PERPAGE = 10
+// PERPAGE is the number of pagination items per page
+const PERPAGE = 5
+
+// PERTENPAGE is the number of pages in between the move back and move forward buttons
+const PERTENPAGE = 5
 
 type message struct {
 	Name    string
@@ -37,18 +40,30 @@ type message struct {
 	Message string
 }
 
+type pagination struct {
+	PerPage        int
+	PerTenPage     int
+	CurrentPage    int
+	CurrentTenPage int
+	LastPage       int
+	LastTenPage    int
+	LeftTen        int
+	RightTen       int
+	TenPages       []int
+	Pagination     []int
+}
+
 type userData struct {
-	IfLoggedIn  bool
-	NEmail      string
-	RePassword  string
-	CurrentPage int
-	Message     message
-	User        entities.User
-	Users       []entities.User
-	Post        entities.Post
-	Posts       []entities.Post
-	Pagination  []int
-	Errors      map[string]string
+	IfLoggedIn bool
+	NEmail     string
+	RePassword string
+	Message    message
+	Pagination pagination
+	User       entities.User
+	Users      []entities.User
+	Post       entities.Post
+	Posts      []entities.Post
+	Errors     map[string]string
 }
 
 type sessionData struct {
@@ -125,22 +140,14 @@ func userManager(res http.ResponseWriter, req *http.Request) {
 			render(res, "user-manager.gohtml", ud)
 			return
 		}
-		var r float64 = float64(userCount) / float64(PERPAGE)
-		pages := int(math.Ceil(r))
-		a := makeRange(1, pages)
-		ud.Pagination = a
-		ud.CurrentPage = 1
 
-		if req.FormValue("method") == "PAGINATE" {
-			currentpage, err := strconv.Atoi(req.FormValue("currentpage"))
-			if err != nil {
-				http.Redirect(res, req, "/admin/users", http.StatusServiceUnavailable)
-				return
-			}
-			ud.CurrentPage = currentpage
+		ud, err := getPagination(req, userCount)
+		if err != nil {
+			ud.Errors["Server"] = "Failed to retreive post count."
+			render(res, "user-manager.gohtml", ud)
 		}
 
-		ausers, err := userConnection.GetUsers(ud.CurrentPage, PERPAGE)
+		ausers, err := userConnection.GetUsers(ud.Pagination.CurrentPage, PERPAGE)
 		if err != nil {
 			ud.Errors["Server"] = "Failed to retreive users."
 			render(res, "user-manager.gohtml", ud)
@@ -460,6 +467,83 @@ func handleUser(res http.ResponseWriter, req *http.Request) {
 	render(res, "index.gohtml", ud)
 }
 
+func getPagination(req *http.Request, itemCount int) (userData, error) {
+	ud := ifLoggedIn(req)
+	ud.Errors = make(map[string]string)
+
+	ud.Pagination.PerPage = PERPAGE
+	ud.Pagination.PerTenPage = PERTENPAGE
+	ud.Pagination.CurrentPage = 1
+	ud.Pagination.CurrentTenPage = 1
+
+	var r float64 = float64(itemCount) / float64(ud.Pagination.PerPage)
+	pages := int(math.Ceil(r))
+
+	a := []int{}
+	if pages < ud.Pagination.PerTenPage {
+		a = makeRange(1, pages)
+	} else {
+		num1 := ((ud.Pagination.CurrentTenPage - 1) * ud.Pagination.PerTenPage) + 1
+		num2 := (num1 + ud.Pagination.PerTenPage) - 1
+		a = makeRange(num1, num2)
+	}
+
+	var t float64 = float64(pages) / float64(ud.Pagination.PerTenPage)
+	tenpages := int(math.Ceil(t))
+	tp := makeRange(1, tenpages)
+
+	ud.Pagination.Pagination = a
+	ud.Pagination.TenPages = tp
+	ud.Pagination.RightTen = 0
+	ud.Pagination.LeftTen = 2
+	ud.Pagination.LastPage = pages
+	ud.Pagination.LastTenPage = tenpages
+
+	if req.FormValue("method") == "PAGINATE" {
+		currentpage, err := strconv.Atoi(req.FormValue("currentpage"))
+		if err != nil {
+			return ud, err
+		}
+		ud.Pagination.CurrentPage = currentpage
+		tenpage, err := strconv.Atoi(req.FormValue("tenpage"))
+		if err != nil {
+			return ud, err
+		}
+		ud.Pagination.CurrentTenPage = tenpage
+		ud.Pagination.RightTen = tenpage - 1
+		ud.Pagination.LeftTen = tenpage + 1
+		if pages < ud.Pagination.PerTenPage {
+			a = makeRange(1, pages)
+		} else {
+			num1 := ((ud.Pagination.CurrentTenPage - 1) * ud.Pagination.PerTenPage) + 1
+			num2 := (num1 + ud.Pagination.PerTenPage) - 1
+			a = makeRange(num1, num2)
+		}
+		ud.Pagination.Pagination = a
+	}
+	if req.FormValue("method") == "TENPAGE" {
+		tenpage, err := strconv.Atoi(req.FormValue("tenpage"))
+		if err != nil {
+			return ud, err
+		}
+		ud.Pagination.RightTen = ud.Pagination.CurrentTenPage
+		ud.Pagination.CurrentTenPage = tenpage
+		ud.Pagination.LeftTen = tenpage + 1
+		if pages < ud.Pagination.PerTenPage {
+			a = makeRange(1, pages)
+			ud.Pagination.CurrentPage = 1
+		} else {
+			num1 := ((ud.Pagination.CurrentTenPage - 1) * ud.Pagination.PerTenPage) + 1
+			ud.Pagination.CurrentPage = num1
+			num2 := (num1 + ud.Pagination.PerTenPage) - 1
+			a = makeRange(num1, num2)
+		}
+		ud.Pagination.Pagination = a
+	}
+
+	return ud, nil
+}
+
 func postManager(res http.ResponseWriter, req *http.Request) {
 	ud := ifLoggedIn(req)
 	ud.Errors = make(map[string]string)
@@ -481,22 +565,14 @@ func postManager(res http.ResponseWriter, req *http.Request) {
 			render(res, "post-manager.gohtml", ud)
 			return
 		}
-		var r float64 = float64(postCount) / float64(PERPAGE)
-		pages := int(math.Ceil(r))
-		a := makeRange(1, pages)
-		ud.Pagination = a
-		ud.CurrentPage = 1
 
-		if req.FormValue("method") == "PAGINATE" {
-			currentpage, err := strconv.Atoi(req.FormValue("currentpage"))
-			if err != nil {
-				http.Redirect(res, req, "/admin/posts", http.StatusServiceUnavailable)
-				return
-			}
-			ud.CurrentPage = currentpage
+		ud, err := getPagination(req, postCount)
+		if err != nil {
+			ud.Errors["Server"] = "Failed to retreive post count."
+			render(res, "post-manager.gohtml", ud)
 		}
 
-		aposts, err := postConnection.GetPosts(ud.CurrentPage, PERPAGE)
+		aposts, err := postConnection.GetPosts(ud.Pagination.CurrentPage, ud.Pagination.PerPage)
 		if err != nil {
 			ud.Errors["Server"] = "Failed to retreive posts."
 			render(res, "post-manager.gohtml", ud)

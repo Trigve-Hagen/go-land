@@ -129,6 +129,16 @@ select {
     font-family: 'Segoe Script', sans-serif;
 }
 
+.post-buttons.active {
+    background: #3750a9;
+    padding: 7px 15px;
+    transition: all .25s ease-in-out;
+    color: #3750a9;
+    background: #ffffff;
+    border: 2px solid #3750a9;
+    transition: all .1s ease-in-out;
+}
+
 #edit-submit:focus, #edit-preview:focus,
 #edit-submit:hover, #edit-preview:hover {
     background: #3750a9;
@@ -149,6 +159,17 @@ select {
     background: #ffffff;
     border: 2px solid #3750a9;
     transition: all .1s ease-in-out;
+}
+
+.post-buttons.active:focus, .post-buttons.active:hover {
+    display: inline-block;
+    color: #ffffff;
+    background: #3750a9;
+    border: 2px solid #ffffff;
+    padding: 7px 15px !important;
+    transition: all .25s ease-in-out;
+    text-transform: uppercase;
+    font-family: 'Segoe Script', sans-serif;
 }
 
 .login-links {

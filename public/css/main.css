@@ -207,8 +207,7 @@ img.user-image {
     }
 
     .pagination {
-        display: flex;
-        flex-direction: row;
+
     }
 
     .posts-wrapper {
